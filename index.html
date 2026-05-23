@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>民宿優惠卷銷售頁｜軒沐居 × 日光森林</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Noto Sans TC',sans-serif;background:#2A2A28;color:var(--ink);
+    -webkit-font-smoothing:antialiased;line-height:1.7}
+  .serif{font-family:'Noto Serif TC',serif}
+
+  /* ====== 頂部切換器（這是 demo 用，正式上線一家一個網址）====== */
+  .switcher{position:sticky;top:0;z-index:80;background:#1C1C1A;padding:10px 12px;
+    display:flex;gap:8px;justify-content:center;border-bottom:1px solid rgba(255,255,255,.1)}
+  .switcher button{font-family:inherit;font-size:14px;font-weight:700;padding:9px 18px;
+    border-radius:30px;border:1.5px solid rgba(255,255,255,.25);background:transparent;
+    color:#fff;cursor:pointer;transition:.15s;white-space:nowrap}
+  .switcher button.on{background:#fff;color:#1C1C1A;border-color:#fff}
+
+  /* ====== 示範價格提醒條 ====== */
+  .demo-banner{background:#F2C14E;color:#5A4500;text-align:center;font-size:13px;
+    font-weight:700;padding:8px 14px;letter-spacing:.3px}
+
+  /* ====== 頁面容器（手機優先窄欄）====== */
+  .page{max-width:480px;margin:0 auto;background:var(--paper);min-height:100vh;
+    box-shadow:0 0 60px rgba(0,0,0,.3);overflow:hidden;padding-bottom:80px}
+
+  /* ====== 照片牆 ====== */
+  .gallery{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:14px}
+  .gallery img{width:100%;object-fit:cover;border-radius:8px;display:block;cursor:pointer;transition:.2s}
+  .gallery img:hover{opacity:.88}
+  .gallery img:first-child{grid-column:1/-1;height:200px}
+  .gallery img:not(:first-child){height:130px}
+
+  /* ====== 燈箱 ====== */
+  .lb{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99;display:none;align-items:center;justify-content:center}
+  .lb.show{display:flex}
+  .lb img{max-width:94%;max-height:90vh;border-radius:10px;object-fit:contain}
+  .lb-x{position:absolute;top:16px;right:20px;color:#fff;font-size:32px;cursor:pointer;line-height:1}
+
+  /* 主題色由 JS 切換 */
+  :root{
+    --ink:#20302B;--ink-soft:#566159;--paper:#FBF8F2;--cream:#F4EEE3;
+    --accent:#BC5B3C;--accent-dark:#9C4628;--sand:#E8DDC8;
+    --line:rgba(32,48,43,.12);--hero1:#1C3730;--hero2:#9C4E2D;
+  }
+
+  /* ====== HERO ====== */
+  .hero-bg{height:400px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;
+    background:linear-gradient(165deg,var(--hero1) 0%,var(--hero2) 100%)}
+  .photo-hint{position:absolute;top:14px;left:14px;font-size:11px;color:#fff;
+    background:rgba(0,0,0,.3);padding:4px 10px;border-radius:20px}
+  .hero-grad{position:absolute;inset:0;background:linear-gradient(to top,rgba(15,20,18,.85) 8%,rgba(15,20,18,.05) 55%)}
+  .hero-c{position:relative;padding:0 28px 28px;color:#fff}
+  .eyebrow{font-size:13px;letter-spacing:3px;opacity:.9;margin-bottom:10px}
+  .hero h1{font-size:32px;font-weight:700;line-height:1.25;margin-bottom:12px}
+  .hero .hook{font-size:15px;opacity:.92}
+
+  .urgent{background:var(--accent);color:#fff;text-align:center;padding:11px;font-size:14px;font-weight:500}
+  .urgent b{font-variant-numeric:tabular-nums}
+
+  section{padding:32px 28px}
+  .label{font-size:12px;letter-spacing:2px;color:var(--accent);font-weight:700;margin-bottom:14px}
+  .lead{font-size:20px;font-weight:500;line-height:1.5}
+
+  .feels li{list-style:none;display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);font-size:15px}
+  .feels li:last-child{border:none}
+  .feels .dot{color:var(--accent);flex-shrink:0}
+
+  /* 優惠卷卡 */
+  .offer{border:1.5px solid var(--ink);border-radius:18px;overflow:hidden;box-shadow:0 14px 30px rgba(0,0,0,.1);background:var(--paper)}
+  .offer-top{background:var(--ink);color:var(--cream);padding:15px 22px;display:flex;justify-content:space-between;align-items:center}
+  .offer-top .name{font-size:15px;font-weight:500;max-width:70%}
+  .badge{background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:4px 11px;border-radius:20px;white-space:nowrap}
+  .offer-body{padding:22px}
+  .demo-tag{display:inline-block;background:#F2C14E;color:#5A4500;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;margin-bottom:8px}
+  .price-row{display:flex;align-items:baseline;gap:12px}
+  .price-now{font-size:42px;font-weight:700;color:var(--accent-dark)}
+  .price-now .cur{font-size:21px;font-weight:500}
+  .price-old{font-size:16px;color:var(--ink-soft);text-decoration:line-through}
+  .save{display:inline-block;background:var(--sand);color:var(--accent-dark);font-weight:700;font-size:13px;padding:4px 12px;border-radius:8px;margin-top:6px}
+  .meta{margin:18px 0;border-top:1px solid var(--line);padding-top:14px}
+  .meta div{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;color:var(--ink-soft);gap:14px}
+  .meta div b{color:var(--ink);font-weight:500;text-align:right}
+  .stock-txt{font-size:13px;color:var(--accent-dark);font-weight:500;display:flex;justify-content:space-between;margin-top:14px}
+  .stock-bar{height:8px;background:var(--sand);border-radius:8px;overflow:hidden;margin-top:6px}
+  .stock-fill{height:100%;background:var(--accent);border-radius:8px}
+
+  .btn{display:block;width:100%;border:none;cursor:pointer;font-family:inherit;font-size:17px;font-weight:700;
+    padding:16px;border-radius:12px;text-align:center;transition:.15s;text-decoration:none}
+  .btn-buy{background:var(--accent);color:#fff;box-shadow:0 8px 18px rgba(0,0,0,.2)}
+  .btn-buy:active{transform:scale(.98)}
+  .btn-line{background:#06C755;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+
+  .points{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .point{background:var(--cream);border-radius:14px;padding:18px}
+  .point h4{font-size:15px;font-weight:700;margin-bottom:4px}
+  .point p{font-size:13px;color:var(--ink-soft)}
+  .point .em{font-size:24px;display:block;margin-bottom:6px}
+
+  .trust{background:var(--ink);color:var(--cream)}
+  .trust .label{color:#E8B98F}
+  .stars{color:#F2C14E;font-size:20px;letter-spacing:3px}
+  .trust .lead{color:#fff;margin-top:10px}
+  .guarantee{display:flex;gap:10px;margin-top:18px;background:rgba(255,255,255,.08);padding:14px;border-radius:12px;font-size:14px}
+
+  .faq-q{cursor:pointer;padding:16px 0;font-size:15px;font-weight:500;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;gap:10px}
+  .faq-q .ic{color:var(--accent);font-size:20px;transition:.2s;flex-shrink:0}
+  .faq-q.open .ic{transform:rotate(45deg)}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .25s;color:var(--ink-soft);font-size:14px;border-bottom:1px solid var(--line)}
+  .faq-a div{padding:14px 0}
+
+  .foot{background:var(--cream);text-align:center;padding:32px 28px}
+  .foot .small{font-size:12px;color:var(--ink-soft);margin-top:16px;line-height:1.8}
+  .foot a{color:var(--accent-dark)}
+
+  .sticky{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+    background:var(--paper);border-top:1px solid var(--line);padding:11px 18px;display:flex;gap:12px;align-items:center;z-index:40}
+  .sticky .p .n{font-size:19px;font-weight:700;color:var(--accent-dark)}
+  .sticky .p .o{font-size:12px;color:var(--ink-soft);text-decoration:line-through}
+  .sticky .p{flex:1}
+  .sticky .btn{width:auto;padding:13px 24px;font-size:15px}
+
+  .modal{position:fixed;inset:0;background:rgba(15,20,18,.6);z-index:90;display:none;align-items:flex-end;justify-content:center}
+  .modal.show{display:flex}
+  .sheet{background:var(--paper);width:100%;max-width:480px;border-radius:22px 22px 0 0;padding:26px 24px 30px;position:relative}
+  .sheet .x{position:absolute;top:16px;right:20px;font-size:26px;color:var(--ink-soft);cursor:pointer}
+  .sheet h3{font-size:20px;font-weight:700;margin-bottom:4px}
+  .sum{background:var(--cream);border-radius:12px;padding:16px;margin:16px 0;font-size:14px}
+  .sum div{display:flex;justify-content:space-between;padding:3px 0}
+  .sum .tot{border-top:1px solid var(--line);margin-top:8px;padding-top:10px;font-size:17px;font-weight:700}
+  .order-form label{display:block;font-size:13px;font-weight:500;margin:12px 0 4px;color:var(--ink)}
+  .order-form input,.order-form select{width:100%;padding:11px 13px;border-radius:9px;
+    border:1.5px solid var(--line);font-family:inherit;font-size:15px;background:#fff;outline:none}
+  .order-form input:focus,.order-form select:focus{border-color:var(--accent)}
+  .cod-note{background:var(--cream);border-radius:10px;padding:12px;font-size:13px;color:var(--ink-soft);margin:14px 0;line-height:1.7}
+  .done{text-align:center;display:none}.done.show{display:block}
+  .check{width:60px;height:60px;border-radius:50%;background:#06C755;color:#fff;font-size:34px;line-height:60px;margin:0 auto 12px}
+  .voucher{border:2px dashed var(--accent);border-radius:14px;padding:18px;margin:14px 0;background:var(--cream)}
+  .voucher .code{font-family:'Noto Serif TC',serif;font-size:24px;font-weight:700;letter-spacing:2px;color:var(--accent-dark);margin:6px 0}
+
+  @keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+  .page>*{animation:rise .5s ease both}
+</style>
+</head>
+<body>
+
+<div class="switcher">
+  <button id="b-xuanmuju" class="on" onclick="render('xuanmuju')">🏕 軒沐居・台東</button>
+  <button id="b-sunlight" onclick="render('sunlight')">🛝 日光森林・台南</button>
+</div>
+
+<div id="app"></div>
+
+<!-- 照片燈箱 -->
+<div class="lb" id="lb" onclick="closeLb()">
+  <span class="lb-x" onclick="closeLb()">×</span>
+  <img id="lb-img" src="" alt="照片">
+</div>
+
+<!-- 購買彈窗 -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <span class="x" onclick="closeBuy()">×</span>
+    <div id="step-pay">
+      <h3 class="serif">填寫訂購資料</h3>
+      <p id="m-name" style="font-size:13px;color:var(--ink-soft);margin-top:4px"></p>
+      <div class="sum">
+        <div><span>優惠卷 × 1</span><span id="m-now"></span></div>
+        <div><span>原價</span><span id="m-old" style="text-decoration:line-through;color:var(--ink-soft)"></span></div>
+        <div class="tot"><span>🏪 超商貨到付款</span><span id="m-pay" style="color:var(--accent-dark)"></span></div>
+      </div>
+      <div class="order-form">
+        <label>姓名</label>
+        <input type="text" id="f-name" placeholder="請輸入真實姓名">
+        <label>手機號碼</label>
+        <input type="tel" id="f-phone" placeholder="09xxxxxxxx">
+        <label>偏好取件超商</label>
+        <select id="f-store">
+          <option value="">請選擇</option>
+          <option>7-ELEVEN</option>
+          <option>全家 FamilyMart</option>
+          <option>萊爾富 Hi-Life</option>
+          <option>OK mart</option>
+          <option>郵寄掛號（請留地址）</option>
+          <option>新莊面交</option>
+        </select>
+      </div>
+      <div class="cod-note">📦 訂購後我們會在 <b>24小時內</b> 透過 LINE 與您確認訂單，確認後寄出實體優惠卷，到店取貨付款即可。</div>
+      <button class="btn btn-buy" style="margin-top:4px" onclick="submitOrder()">確認訂購・超商貨到付款</button>
+    </div>
+    <div id="step-done" class="done">
+      <div class="check">✓</div>
+      <h3 class="serif">訂單送出成功！</h3>
+      <div class="voucher">
+        <div style="font-size:12px;color:var(--ink-soft)">訂單編號</div>
+        <div class="code" id="vcode">WL-00001</div>
+        <button class="btn btn-ghost" style="font-size:14px;padding:9px" onclick="copyCode(event)">複製訂單號</button>
+      </div>
+      <div class="cod-note" style="text-align:left;margin:14px 0">
+        📋 <b>接下來的步驟：</b><br>
+        1️⃣ 我們收到訂單後 24 小時內會透過 LINE 確認<br>
+        2️⃣ 確認後寄出實體優惠卷<br>
+        3️⃣ 到超商取貨時付款即可入手！
+      </div>
+      <a id="m-line" href="#" class="btn btn-line">加 LINE 即時確認訂單</a>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================================================================
+   一份模板，兩筆資料 —— 多一家民宿 = 多一個物件，不用重做頁面
+   ★ 標記的欄位 = 你要填／改的真實資料
+=================================================================== */
+const DATA = {
+  xuanmuju: {
+    isDemo: false,
+    theme:{accent:'#BC5B3C',accentDark:'#9C4628',hero1:'#1C3730',hero2:'#9C4E2D',
+           paper:'#FBF8F2',cream:'#F4EEE3',sand:'#E8DDC8',ink:'#20302B',inkSoft:'#566159'},
+    eyebrow:'台東 · 鹿野高台 · 懶人露營',
+    name:'軒沐居<br>豪華露營',
+    heroImg:'images/xuanmuju/02_lotus_tent.jpg',
+    gallery:[
+      'images/xuanmuju/03_palace_tent.jpg',
+      'images/xuanmuju/08_temple_tent.jpg',
+      'images/xuanmuju/04_firefly.jpg',
+      'images/xuanmuju/07_bonfire.jpg',
+      'images/xuanmuju/05_movie_night.jpg',
+    ],
+    hook:'在熱氣球的故鄉，免搭帳、開空調，睡進一夜星空。',
+    lead:'你買的不是一晚，是「免準備、開車到了就玩」的台東。',
+    feels:['空調豪華帳篷，免搭免收，行李放下就入住','鄰近熱氣球嘉年華高台，抬頭就是球海',
+           '賞螢火蟲、營火、電影之夜、手作 DIY','寵物友善、親子設施，全家毛孩一起放電'],
+    offerName:'蓮花四人家庭房 · 含餐券',
+    badge:'約 5 折',
+    priceNow:'1,800',
+    priceOld:'3,900',
+    save:'立省 NT$2,100',
+    meta:[['適用房型','蓮花四人家庭帳'],['含','餐券（店家搭配多樣餐點）'],
+          ['適用日','週日～週五（平日不加價）'],['不適用','週六、春節、連假、暑假熱氣球季'],
+          ['使用期限','2027/5/31 前'],['取得方式','超商貨到付款 / 郵寄掛號 / 新莊面交']],
+    sold:0, left:4,
+    points:[['⛺','免搭豪華帳','開空調、附衛浴免治馬桶'],['🎈','熱氣球故鄉','鹿野高台就在旁邊'],
+            ['🐶','寵物友善','毛孩同行(豪華房+清潔費)'],['🔥','活動超多','螢火蟲/營火/電影夜']],
+    rating:'4.8', reviews:'Google 與 IG 真實好評',
+    review:'「免搭帳超方便，孩子玩到不想走，晚上營火很療癒。」',
+    faq:[['買了怎麼預約日期？','購買後拿到電子券，加官方 LINE @111pwplh 告知想住的日期，我們幫你跟營區確認。'],
+         ['暑假可以用嗎？','暑假熱氣球季不適用本券，其餘平日(週日～週五)皆可，假日需洽詢加價。'],
+         ['沒用到能退嗎？','未核銷的券在效期內可申請全額退。']],
+    line:'https://line.me/R/ti/p/@111pwplh', phone:'0901 258 367',
+  },
+  sunlight: {
+    isDemo: false,
+    theme:{accent:'#E0823C',accentDark:'#B85E1E',hero1:'#2C4A6E',hero2:'#E08A3C',
+           paper:'#FBF9F4',cream:'#FDF1E2',sand:'#F6DFC4',ink:'#243447',inkSoft:'#5A6878'},
+    eyebrow:'台南 · 安平 · 親子包棟 Villa',
+    name:'日光森林<br>親子電梯民宿',
+    heroImg:'images/sunlight/hero.jpg',
+    gallery:[
+      'images/sunlight/01_exterior.jpg',
+      'images/sunlight/03_slide.jpg',
+      'images/sunlight/04_living.jpg',
+      'images/sunlight/02_room.jpg',
+      'images/sunlight/05_kids.jpg',
+    ],
+    hook:'整棟包下，溜滑梯、球池、KTV 一次玩到飽，走路到安平老街。',
+    lead:'你買的不是住宿，是「一家人＋朋友佔下整棟」的尖叫聲。',
+    feels:['主題溜滑梯房＋兒童球池，孩子嗨翻','KTV、麻將、烤肉、交誼廳，大人也有得玩',
+           '電梯直達，推娃娃車、長輩同行都方便','走路到安平老街、漁光島、安平古堡'],
+    offerName:'八位包棟方案 · 2間四人房',
+    badge:'約 2 折',
+    priceNow:'3,400',
+    priceOld:'17,000',
+    save:'立省 NT$13,600',
+    meta:[['適用房型','八位包棟（2間四人親子房）'],['早餐','不含早餐'],
+          ['適用日','平日週一～週四（不加價）'],['寒暑假','週一～週四 +3,000'],
+          ['加房','每間四人房 +3,000（最多五間20位）'],['不適用','週五～週日、春節、連假、跨年'],
+          ['使用期限','2026/7/31 前'],['取得方式','超商貨到付款 / 郵寄掛號 / 新莊面交']],
+    sold:0, left:1,
+    points:[['🛝','主題滑梯房','室內溜滑梯＋球池'],['🎤','KTV 麻將','整棟你們自己嗨'],
+            ['🛗','電梯民宿','長輩娃娃車都方便'],['🏖','安平老街','走路就到，吃喝玩買']],
+    rating:'4.9', reviews:'親子客群一致好評',
+    review:'「滑梯房小孩玩瘋，包棟很自在，離安平老街超近！」',
+    faq:[['買了怎麼預約日期？','購買後拿到電子券，加客服 LINE @SEF2174H 告知想住日期，我們協助確認房況。'],
+         ['可以加人嗎？','可加購房型，一間四人房 +3000，最多五間房 20 位，請先洽詢。'],
+         ['沒用到能退嗎？','未核銷的券在效期內可申請全額退。']],
+    line:'http://line.me/ti/p/@sef2174h', phone:'0915 757 375',
+  }
+};
+
+let current='xuanmuju';
+
+function render(key){
+  current=key;
+  const d=DATA[key];
+  // 切換主題色
+  const t=d.theme, r=document.documentElement.style;
+  r.setProperty('--accent',t.accent); r.setProperty('--accent-dark',t.accentDark);
+  r.setProperty('--hero1',t.hero1); r.setProperty('--hero2',t.hero2);
+  r.setProperty('--paper',t.paper); r.setProperty('--cream',t.cream);
+  r.setProperty('--sand',t.sand); r.setProperty('--ink',t.ink); r.setProperty('--ink-soft',t.inkSoft);
+  // 切換按鈕高亮
+  document.getElementById('b-xuanmuju').classList.toggle('on',key==='xuanmuju');
+  document.getElementById('b-sunlight').classList.toggle('on',key==='sunlight');
+
+  const feels=d.feels.map(f=>`<li><span class="dot">●</span><div>${f}</div></li>`).join('');
+  const meta=d.meta.map(m=>`<div><span>${m[0]}</span><b>${m[1]}</b></div>`).join('');
+  const points=d.points.map(p=>`<div class="point"><span class="em">${p[0]}</span><h4>${p[1]}</h4><p>${p[2]}</p></div>`).join('');
+  const stockPct=Math.round(d.sold/(d.sold+d.left)*100);
+  const faq=d.faq.map(f=>`<div><div class="faq-q" onclick="toggleFaq(this)">${f[0]}<span class="ic">+</span></div>
+    <div class="faq-a"><div>${f[1]}</div></div></div>`).join('');
+  const galleryHtml=d.gallery.map((u,i)=>`<img src="${u}" alt="民宿照片${i+1}" loading="lazy" onclick="openLb('${u}')">`).join('');
+
+  document.getElementById('app').innerHTML=`
+  ${d.isDemo ? '<div class="demo-banner">⚠ 軒沐居價格尚未確定，請填入真實原價／售價後替換</div>' : ''}
+  <div class="page">
+    <div class="hero"><div class="hero-bg" style="background-image:url('${d.heroImg}');background-size:cover;background-position:center">
+      <div class="hero-grad"></div>
+      <div class="hero-c"><div class="eyebrow">${d.eyebrow}</div>
+        <h1 class="serif">${d.name}</h1><p class="hook">${d.hook}</p></div>
+    </div></div>
+
+    <div class="urgent">🔥 限量優惠倒數 <b id="cd">--</b></div>
+
+    <section><div class="label">這趟旅行</div>
+      <p class="lead serif">${d.lead}</p>
+      <ul class="feels" style="margin-top:16px">${feels}</ul></section>
+
+    <section style="padding-top:6px"><div class="label">限量優惠卷</div>
+      <div class="offer">
+        <div class="offer-top"><span class="name">${d.offerName}</span><span class="badge">${d.badge}</span></div>
+        <div class="offer-body">
+          ${d.isDemo ? '<span class="demo-tag">示範價・待填</span>' : ''}
+          <div class="price-row"><span class="price-now"><span class="cur">NT$</span>${d.priceNow}</span>
+            <span class="price-old">原價 NT$${d.priceOld}</span></div>
+          <span class="save">${d.save}</span>
+          <div class="meta">${meta}</div>
+          <div class="stock-txt"><span>已售出 ${d.sold} 張</span><span>僅剩 ${d.left} 張</span></div>
+          <div class="stock-bar"><div class="stock-fill" style="width:${stockPct}%"></div></div>
+          <button class="btn btn-buy" style="margin-top:18px" onclick="openBuy()">立即購買 · NT$${d.priceNow}</button>
+        </div></div></section>
+
+    <section style="padding-top:6px"><div class="label">為什麼選這裡</div>
+      <div class="points">${points}</div></section>
+
+    <section style="padding-top:6px"><div class="label">實景照片</div>
+      <div class="gallery">${galleryHtml}</div></section>
+
+    <section class="trust"><div class="label">真實評價</div>
+      <div class="stars">★★★★★</div>
+      <p class="lead serif">${d.rating} / 5.0 · ${d.reviews}</p>
+      <p style="color:rgba(255,255,255,.75);font-size:14px;margin-top:6px">${d.review}</p>
+      <div class="guarantee"><div>🛡 購券後收到電子券序號，到店出示即可。<b style="color:#fff">未使用可全額退</b>，零風險。</div></div></section>
+
+    <section><div class="label">常見問題</div>${faq}
+      <a href="${d.line}" class="btn btn-line" style="margin-top:18px">💬 加 LINE 問問（AI 客服 24h）</a></section>
+
+    <footer class="foot">
+      <p class="lead serif" style="font-size:18px">名額有限，手刀帶走這晚。</p>
+      <button class="btn btn-buy" style="margin-top:14px" onclick="openBuy()">立即購買 · NT$${d.priceNow}</button>
+      <p class="small">本優惠卷由 <b>微旅嚴選</b> 與民宿合作銷售<br>
+        民宿聯絡：${d.phone}<br>
+        客服 LINE：<a href="${d.line}">加入 LINE 客服</a></p>
+    </footer>
+  </div>
+  <div class="sticky">
+    <div class="p"><div class="n">NT$${d.priceNow}</div><div class="o">原價 NT$${d.priceOld}</div></div>
+    <button class="btn btn-buy" onclick="openBuy()">立即購買</button>
+  </div>`;
+  startCountdown();
+}
+
+/* 倒數 */
+let cdTimer;
+function startCountdown(){
+  clearInterval(cdTimer);
+  const end=Date.now()+(2*86400000)+(11*3600000);
+  cdTimer=setInterval(()=>{
+    let x=end-Date.now(); if(x<0)x=0;
+    const p=n=>String(n).padStart(2,'0');
+    const el=document.getElementById('cd');
+    if(el) el.textContent=`${p(Math.floor(x/86400000))} 天 ${p(Math.floor(x%86400000/3600000))}:${p(Math.floor(x%3600000/60000))}:${p(Math.floor(x%60000/1000))}`;
+  },1000);
+}
+
+/* 購買彈窗 */
+function openBuy(){
+  const d=DATA[current];
+  document.getElementById('m-name').textContent=d.offerName;
+  document.getElementById('m-now').textContent='NT$'+d.priceNow;
+  document.getElementById('m-old').textContent='NT$'+d.priceOld;
+  document.getElementById('m-pay').textContent='NT$'+d.priceNow;
+  document.getElementById('m-line').href=d.line;
+  document.getElementById('vcode').textContent=(current==='xuanmuju'?'XMJ-':'SLF-')+Math.random().toString(36).slice(2,7).toUpperCase();
+  document.getElementById('step-pay').style.display='block';
+  document.getElementById('step-done').classList.remove('show');
+  document.getElementById('modal').classList.add('show');
+}
+function closeBuy(){document.getElementById('modal').classList.remove('show');}
+function submitOrder(){
+  const name=document.getElementById('f-name').value.trim();
+  const phone=document.getElementById('f-phone').value.trim();
+  const store=document.getElementById('f-store').value;
+  if(!name){alert('請填寫姓名');return;}
+  if(!phone||!/^09\d{8}$/.test(phone)){alert('請填寫正確的手機號碼（09開頭共10碼）');return;}
+  if(!store){alert('請選擇取件方式');return;}
+  const prefix=current==='xuanmuju'?'XMJ':'SLF';
+  const orderNo=prefix+'-'+Date.now().toString().slice(-6);
+  document.getElementById('vcode').textContent=orderNo;
+  document.getElementById('step-pay').style.display='none';
+  document.getElementById('step-done').classList.add('show');
+}
+function copyCode(e){navigator.clipboard?.writeText(document.getElementById('vcode').textContent);e.target.textContent='已複製 ✓';}
+function toggleFaq(q){q.classList.toggle('open');const a=q.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px';}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeBuy();});
+function openLb(src){document.getElementById('lb-img').src=src;document.getElementById('lb').classList.add('show');}
+function closeLb(){document.getElementById('lb').classList.remove('show');}
+
+render('xuanmuju');
+</script>
+</body>
+</html>
