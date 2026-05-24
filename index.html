@@ -576,7 +576,7 @@ function closeBuy(){document.getElementById('modal').classList.remove('show');}
 const N8N_WEBHOOK = 'https://nickleo9.zeabur.app/webhook/weilu-order';
 /* ───────────────────────────────────────────────────── */
 
-async function submitOrder(){
+function submitOrder(){
   const name  = document.getElementById('f-name').value.trim();
   const phone = document.getElementById('f-phone').value.trim();
   const store = document.getElementById('f-store').value;
@@ -584,40 +584,24 @@ async function submitOrder(){
   if(!phone||!/^09\d{8}$/.test(phone)){alert('請填寫正確的手機號碼（09開頭共10碼）');return;}
   if(!store){alert('請選擇取件方式');return;}
 
-  const btn = document.querySelector('#step-pay .btn-buy');
-  const origText = btn.textContent;
-  btn.textContent = '送出中…';
-  btn.disabled = true;
-
+  /* 前端直接產生訂單號（格式與 n8n 相同） */
   const propertyName = current === 'xuanmuju' ? '軒沐居｜蓮花四人帳' : '日光森林｜八位包棟';
-  const prefix       = current === 'xuanmuju' ? 'XMJ' : 'SLF';
-  const fallbackId   = prefix + '-' + Date.now().toString().slice(-6);
+  const prefix = current === 'xuanmuju' ? 'XMJ' : 'SLF';
+  const now = new Date();
+  const ymd = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const orderId = `${prefix}-${ymd}-${String(Math.floor(Math.random()*9000)+1000)}`;
 
-  let orderId = fallbackId;
+  /* Fire-and-forget：no-cors + text/plain 避免 CORS preflight，
+     n8n 在背景處理，不阻塞使用者 */
+  fetch(N8N_WEBHOOK, {
+    method : 'POST',
+    mode   : 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body   : JSON.stringify({ property: current, propertyName, name, phone, store,
+                              orderId, ts: now.toISOString() })
+  }).catch(()=>{});
 
-  try {
-    const res = await fetch(N8N_WEBHOOK, {
-      method : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body   : JSON.stringify({
-        property    : current,
-        propertyName,
-        name,
-        phone,
-        store,
-        ts          : new Date().toISOString()
-      })
-    });
-    if(res.ok){
-      const data = await res.json();
-      if(data && data.orderId) orderId = data.orderId;
-    }
-  } catch(e){
-    console.warn('n8n webhook 無回應，使用備用訂單號', e);
-  }
-
-  btn.textContent = origText;
-  btn.disabled = false;
+  /* 立即顯示成功畫面 */
   document.getElementById('vcode').textContent = orderId;
   document.getElementById('step-pay').style.display = 'none';
   document.getElementById('step-done').classList.add('show');
