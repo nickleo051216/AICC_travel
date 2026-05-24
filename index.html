@@ -184,6 +184,16 @@
   .done{text-align:center;display:none}.done.show{display:block}
   .check{width:60px;height:60px;border-radius:50%;background:#06C755;color:#fff;font-size:34px;line-height:60px;margin:0 auto 12px}
   .voucher{border:2px dashed var(--accent);border-radius:14px;padding:18px;margin:14px 0;background:var(--cream)}
+
+  /* ====== 7-11 選店 picker ====== */
+  .store-picker{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .btn-store-pick{padding:14px;border:2px dashed var(--accent);background:var(--cream);
+    color:var(--accent-dark);border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;
+    transition:.18s;font-family:inherit}
+  .btn-store-pick:hover{background:var(--sand);border-style:solid}
+  .store-info{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+    border-left:4px solid var(--accent)}
+  .store-info b{font-size:14px;color:var(--ink)}
   .voucher .code{font-family:'Noto Serif TC',serif;font-size:24px;font-weight:700;letter-spacing:2px;color:var(--accent-dark);margin:6px 0}
 
   /* ====== 動態效果 ====== */
@@ -268,14 +278,21 @@
         <input type="text" id="f-name" placeholder="請輸入真實姓名">
         <label>手機號碼</label>
         <input type="tel" id="f-phone" placeholder="09xxxxxxxx">
-        <label>取件超商（貨到付款）</label>
-        <select id="f-store">
-          <option value="">請選擇超商</option>
-          <option>7-ELEVEN</option>
-          <option>全家 FamilyMart</option>
-          <option>萊爾富 Hi-Life</option>
-          <option>OK mart</option>
-        </select>
+        <label>取件超商（7-11 貨到付款）</label>
+        <div class="store-picker">
+          <button type="button" class="btn-store-pick" onclick="pickStore()">
+            <span id="store-pick-label">📍 選擇取貨門市</span>
+          </button>
+          <div id="store-info" class="store-info" style="display:none">
+            <div><b id="store-name"></b></div>
+            <div id="store-address" style="font-size:12px;color:var(--ink-soft);margin-top:2px"></div>
+            <div style="font-size:11px;color:var(--ink-soft);margin-top:4px">店號：<span id="store-id"></span></div>
+          </div>
+        </div>
+        <input type="hidden" id="f-store" value="7-ELEVEN">
+        <input type="hidden" id="f-store-id" value="">
+        <input type="hidden" id="f-store-name" value="">
+        <input type="hidden" id="f-store-addr" value="">
       </div>
       <div class="cod-note">📦 訂購後我們會在 <b>24小時內</b> 透過 LINE 與您確認訂單，確認後寄出實體優惠卷，到店取貨付款即可。</div>
       <button class="btn btn-buy" style="margin-top:4px" onclick="submitOrder()">確認訂購・超商貨到付款</button>
@@ -630,12 +647,15 @@ const N8N_WEBHOOK = 'https://nickleo9.zeabur.app/webhook/weilu-order';
 /* ───────────────────────────────────────────────────── */
 
 function submitOrder(){
-  const name  = document.getElementById('f-name').value.trim();
-  const phone = document.getElementById('f-phone').value.trim();
-  const store = document.getElementById('f-store').value;
+  const name    = document.getElementById('f-name').value.trim();
+  const phone   = document.getElementById('f-phone').value.trim();
+  const storeId = document.getElementById('f-store-id').value;
+  const storeName = document.getElementById('f-store-name').value;
+  const storeAddr = document.getElementById('f-store-addr').value;
+
   if(!name){alert('請填寫姓名');return;}
   if(!phone||!/^09\d{8}$/.test(phone)){alert('請填寫正確的手機號碼（09開頭共10碼）');return;}
-  if(!store){alert('請選擇取件方式');return;}
+  if(!storeId){alert('請點「📍 選擇取貨門市」選擇 7-11 取貨門市');return;}
 
   /* 前端直接產生訂單號（格式與 n8n 相同） */
   const propertyName = current === 'xuanmuju' ? '軒沐居｜蓮花四人帳' : '日光森林｜八位包棟';
@@ -650,14 +670,100 @@ function submitOrder(){
     method : 'POST',
     mode   : 'no-cors',
     headers: { 'Content-Type': 'text/plain' },
-    body   : JSON.stringify({ property: current, propertyName, name, phone, store,
-                              orderId, ts: now.toISOString() })
+    body   : JSON.stringify({
+      property: current, propertyName, name, phone,
+      store: '7-ELEVEN',
+      storeId, storeName, storeAddress: storeAddr,
+      orderId, ts: now.toISOString()
+    })
   }).catch(()=>{});
+
+  /* 用後即焚 — 清掉 sessionStorage 暫存 */
+  try { sessionStorage.removeItem('weilu_pickform'); } catch(_){}
 
   /* 立即顯示成功畫面 */
   document.getElementById('vcode').textContent = orderId;
   document.getElementById('step-pay').style.display = 'none';
   document.getElementById('step-done').classList.add('show');
+}
+
+/* ====== 7-11 選店：跳綠界 CVS Map ====== */
+const ECPAY_MERCHANTID = '3475994';
+const CVS_CALLBACK_URL = 'https://nickleo9.zeabur.app/webhook/weilu-cvs-callback';
+const CVS_MAP_URL = 'https://logistics.ecpay.com.tw/Express/map';
+
+function pickStore(){
+  /* 1. 表單暫存到 sessionStorage（跳轉後還原） */
+  const formSnapshot = {
+    current,
+    name : document.getElementById('f-name').value,
+    phone: document.getElementById('f-phone').value,
+    tierPrice: document.getElementById('m-now').textContent,
+    tierName : document.getElementById('m-name').textContent,
+    tierOld  : document.getElementById('m-old').textContent,
+    ts: Date.now()
+  };
+  try { sessionStorage.setItem('weilu_pickform', JSON.stringify(formSnapshot)); } catch(_){}
+
+  /* 2. form POST 跳轉到綠界 Map 頁 */
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = CVS_MAP_URL;
+  form.style.display = 'none';
+
+  const fields = {
+    MerchantID       : ECPAY_MERCHANTID,
+    MerchantTradeNo  : 'WL' + Date.now().toString().slice(-12),
+    LogisticsType    : 'CVS',
+    LogisticsSubType : 'UNIMARTC2C',   // 7-11 C2C 交貨便
+    IsCollection     : 'Y',             // 啟用代收貨款
+    ServerReplyURL   : CVS_CALLBACK_URL,
+    ExtraData        : '',
+    Device           : (window.innerWidth < 768 ? '1' : '0')  // 1=手機版地圖
+  };
+  for (const [k, v] of Object.entries(fields)) {
+    const i = document.createElement('input');
+    i.type = 'hidden'; i.name = k; i.value = v;
+    form.appendChild(i);
+  }
+  document.body.appendChild(form);
+  form.submit();
+}
+
+/* ====== 回到頁面時：偵測 query string 把店資訊還原 ====== */
+function restoreFromCVS(){
+  const u = new URL(location.href);
+  const sid  = u.searchParams.get('CVSStoreID');
+  const snm  = u.searchParams.get('CVSStoreName');
+  const sadd = u.searchParams.get('CVSAddress');
+  if (!sid) return;
+
+  /* 1. 還原 sessionStorage 表單 + 重新打開 modal */
+  let snap = null;
+  try { snap = JSON.parse(sessionStorage.getItem('weilu_pickform')||'null'); } catch(_){}
+  if (snap) {
+    current = snap.current;
+    render(current);
+    /* 重打 openBuy 用原 tier 價 */
+    const price = (snap.tierPrice||'').replace(/[^\d]/g,'');
+    const old   = (snap.tierOld||'').replace(/[^\d]/g,'');
+    openBuy(price, snap.tierName, old);
+    document.getElementById('f-name').value  = snap.name  || '';
+    document.getElementById('f-phone').value = snap.phone || '';
+  }
+
+  /* 2. 填入店資訊 */
+  document.getElementById('f-store-id').value   = sid;
+  document.getElementById('f-store-name').value = snm  || '';
+  document.getElementById('f-store-addr').value = sadd || '';
+  document.getElementById('store-name').textContent    = snm || '';
+  document.getElementById('store-address').textContent = sadd || '';
+  document.getElementById('store-id').textContent      = sid;
+  document.getElementById('store-info').style.display  = 'block';
+  document.getElementById('store-pick-label').textContent = '✓ 已選 ' + (snm || sid) + '（點此重選）';
+
+  /* 3. 清掉 query string（避免重整觸發） */
+  history.replaceState({}, '', location.pathname);
 }
 function copyCode(e){navigator.clipboard?.writeText(document.getElementById('vcode').textContent);e.target.textContent='已複製 ✓';}
 function toggleFaq(q){q.classList.toggle('open');const a=q.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px';}
@@ -722,6 +828,9 @@ document.addEventListener('keydown',e=>{
 });
 
 render('xuanmuju');
+
+/* 若是從綠界選店頁跳回，自動還原表單 + 填入店資訊 */
+restoreFromCVS();
 </script>
 </body>
 </html>
