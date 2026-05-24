@@ -264,15 +264,13 @@
         <input type="text" id="f-name" placeholder="請輸入真實姓名">
         <label>手機號碼</label>
         <input type="tel" id="f-phone" placeholder="09xxxxxxxx">
-        <label>偏好取件超商</label>
+        <label>取件超商（貨到付款）</label>
         <select id="f-store">
-          <option value="">請選擇</option>
+          <option value="">請選擇超商</option>
           <option>7-ELEVEN</option>
           <option>全家 FamilyMart</option>
           <option>萊爾富 Hi-Life</option>
           <option>OK mart</option>
-          <option>郵寄掛號（請留地址）</option>
-          <option>新莊面交</option>
         </select>
       </div>
       <div class="cod-note">📦 訂購後我們會在 <b>24小時內</b> 透過 LINE 與您確認訂單，確認後寄出實體優惠卷，到店取貨付款即可。</div>
@@ -334,7 +332,7 @@ const DATA = {
     save:'立省 NT$2,100',
     meta:[['適用房型','蓮花四人家庭帳'],['含','餐券（店家搭配多樣餐點）'],
           ['適用日','週日～週五（平日不加價）'],['不適用','週六、春節、連假、暑假熱氣球季'],
-          ['使用期限','2027/5/31 前'],['取得方式','超商貨到付款 / 郵寄掛號 / 新莊面交']],
+          ['使用期限','2027/5/31 前'],['取得方式','超商貨到付款']],
     sold:0, left:4,
     points:[['⛺','免搭豪華帳','開空調、附衛浴免治馬桶'],['🎈','熱氣球故鄉','鹿野高台就在旁邊'],
             ['🐶','寵物友善','毛孩同行(豪華房+清潔費)'],['🔥','活動超多','螢火蟲/營火/電影夜']],
@@ -377,7 +375,7 @@ const DATA = {
     meta:[['適用房型','八位包棟（2間四人親子房）'],['早餐','不含早餐'],
           ['適用日','平日週一～週四（不加價）'],['寒暑假','週一～週四 +3,000'],
           ['加房','每間四人房 +3,000（最多五間20位）'],['不適用','週五～週日、春節、連假、跨年'],
-          ['使用期限','2026/7/31 前'],['取得方式','超商貨到付款 / 郵寄掛號 / 新莊面交']],
+          ['使用期限','2026/7/31 前'],['取得方式','超商貨到付款']],
     sold:0, left:1,
     points:[['🛝','主題滑梯房','室內溜滑梯＋球池'],['🎤','KTV 麻將','整棟你們自己嗨'],
             ['🛗','電梯民宿','長輩娃娃車都方便'],['🏖','安平老街','走路就到，吃喝玩買']],
@@ -574,17 +572,54 @@ function openBuy(tierPrice,tierName,oldPrice){
   document.getElementById('modal').classList.add('show');
 }
 function closeBuy(){document.getElementById('modal').classList.remove('show');}
-function submitOrder(){
-  const name=document.getElementById('f-name').value.trim();
-  const phone=document.getElementById('f-phone').value.trim();
-  const store=document.getElementById('f-store').value;
+/* ── 填入你的 n8n Webhook URL ───────────────────────── */
+const N8N_WEBHOOK = 'https://nickleo9.zeabur.app/webhook/weilu-order';
+/* ───────────────────────────────────────────────────── */
+
+async function submitOrder(){
+  const name  = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const store = document.getElementById('f-store').value;
   if(!name){alert('請填寫姓名');return;}
   if(!phone||!/^09\d{8}$/.test(phone)){alert('請填寫正確的手機號碼（09開頭共10碼）');return;}
   if(!store){alert('請選擇取件方式');return;}
-  const prefix=current==='xuanmuju'?'XMJ':'SLF';
-  const orderNo=prefix+'-'+Date.now().toString().slice(-6);
-  document.getElementById('vcode').textContent=orderNo;
-  document.getElementById('step-pay').style.display='none';
+
+  const btn = document.querySelector('#step-pay .btn-buy');
+  const origText = btn.textContent;
+  btn.textContent = '送出中…';
+  btn.disabled = true;
+
+  const propertyName = current === 'xuanmuju' ? '軒沐居｜蓮花四人帳' : '日光森林｜八位包棟';
+  const prefix       = current === 'xuanmuju' ? 'XMJ' : 'SLF';
+  const fallbackId   = prefix + '-' + Date.now().toString().slice(-6);
+
+  let orderId = fallbackId;
+
+  try {
+    const res = await fetch(N8N_WEBHOOK, {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify({
+        property    : current,
+        propertyName,
+        name,
+        phone,
+        store,
+        ts          : new Date().toISOString()
+      })
+    });
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.orderId) orderId = data.orderId;
+    }
+  } catch(e){
+    console.warn('n8n webhook 無回應，使用備用訂單號', e);
+  }
+
+  btn.textContent = origText;
+  btn.disabled = false;
+  document.getElementById('vcode').textContent = orderId;
+  document.getElementById('step-pay').style.display = 'none';
   document.getElementById('step-done').classList.add('show');
 }
 function copyCode(e){navigator.clipboard?.writeText(document.getElementById('vcode').textContent);e.target.textContent='已複製 ✓';}
