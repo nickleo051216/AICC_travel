@@ -177,8 +177,50 @@
   .voucher{border:2px dashed var(--accent);border-radius:14px;padding:18px;margin:14px 0;background:var(--cream)}
   .voucher .code{font-family:'Noto Serif TC',serif;font-size:24px;font-weight:700;letter-spacing:2px;color:var(--accent-dark);margin:6px 0}
 
-  @keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-  .page>*{animation:rise .5s ease both}
+  /* ====== 動態效果 ====== */
+
+  /* Hero Ken Burns 電影感縮放 */
+  .hero{overflow:hidden}
+  @keyframes kenBurns{from{transform:scale(1.08)}to{transform:scale(1)}}
+  .hero-bg{animation:kenBurns 14s ease-out both}
+
+  /* Scroll Reveal */
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+  .reveal-1{transition-delay:.08s}
+  .reveal-2{transition-delay:.18s}
+
+  /* 倒數秒數跳動 */
+  @keyframes cdTick{0%{transform:scale(1.15);opacity:.7}100%{transform:scale(1);opacity:1}}
+  .cd-tick{animation:cdTick .22s ease}
+
+  /* 倒數區塊閃光光暈 */
+  @keyframes cdGlow{0%,100%{box-shadow:none}50%{box-shadow:0 0 30px rgba(188,91,60,.3)}}
+  .cd-block{animation:cdGlow 3s ease-in-out infinite}
+
+  /* 分級卡 hover 上浮 */
+  .tier:not(.sold){transition:transform .22s ease,box-shadow .22s ease}
+  .tier.hot:hover{transform:translateY(-5px);box-shadow:0 16px 36px rgba(0,0,0,.18)}
+
+  /* 進度條動態填滿 */
+  .t-fill,.t-fill-sold{transition:width .9s cubic-bezier(.22,.68,0,1.2)}
+
+  /* 照片 hover 縮放 */
+  .gallery img{transition:opacity .25s,transform .35s ease}
+  .gallery img:hover{opacity:.88;transform:scale(1.05)}
+
+  /* Sticky bar 從底部滑入 */
+  @keyframes slideUp{from{transform:translateX(-50%) translateY(100%)}to{transform:translateX(-50%) translateY(0)}}
+  .sticky{animation:slideUp .5s .4s cubic-bezier(.22,.68,0,1.2) both}
+
+  /* 定價數字出現 */
+  @keyframes priceIn{from{opacity:0;transform:translateY(14px) scale(.92)}to{opacity:1;transform:none}}
+  .t-price{animation:priceIn .45s ease both}
+
+  /* 購買按鈕呼吸效果 */
+  @keyframes btnBreath{0%,100%{box-shadow:0 8px 18px rgba(0,0,0,.2)}
+    50%{box-shadow:0 12px 28px rgba(188,91,60,.45)}}
+  .btn-buy{animation:btnBreath 2.5s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -408,22 +450,22 @@ function render(key){
       <div class="cd-sub">🔥 早鳥名額有限，售完即止</div>
     </div>
 
-    <section><div class="label">這趟旅行</div>
+    <section class="reveal"><div class="label">這趟旅行</div>
       <p class="lead serif">${d.lead}</p>
       <ul class="feels" style="margin-top:16px">${feels}</ul></section>
 
-    <section style="padding-top:6px"><div class="label">選擇方案</div>
+    <section class="reveal" style="padding-top:6px"><div class="label">選擇方案</div>
       <div class="tiers">${tiersHtml}</div>
       <div class="meta" style="margin-top:18px">${meta}</div>
     </section>
 
-    <section style="padding-top:6px"><div class="label">為什麼選這裡</div>
+    <section class="reveal" style="padding-top:6px"><div class="label">為什麼選這裡</div>
       <div class="points">${points}</div></section>
 
-    <section style="padding-top:6px"><div class="label">實景照片</div>
+    <section class="reveal" style="padding-top:6px"><div class="label">實景照片</div>
       <div class="gallery">${galleryHtml}</div></section>
 
-    <section class="trust"><div class="label">真實評價</div>
+    <section class="trust reveal"><div class="label">真實評價</div>
       <div class="stars">★★★★★</div>
       <p class="lead serif">${d.rating} / 5.0 · ${d.reviews}</p>
       <p style="color:rgba(255,255,255,.75);font-size:14px;margin-top:6px">${d.review}</p>
@@ -445,25 +487,55 @@ function render(key){
     <button class="btn btn-buy" onclick="openBuy('${stickyPrice}','${lowestAvail?lowestAvail.name:''}','${d.priceOld}')">立即搶購</button>
   </div>`;
   startCountdown();
+  requestAnimationFrame(setupAnimations);
 }
 
-/* 大倒數 */
+/* 大倒數 + 秒數跳動 */
 let cdTimer;
 function startCountdown(){
   clearInterval(cdTimer);
-  const end=Date.now()+(5*86400000)+(14*3600000); // 5天14小時後截止
+  const end=Date.now()+(5*86400000)+(14*3600000);
   cdTimer=setInterval(()=>{
     let x=end-Date.now(); if(x<0)x=0;
     const p=n=>String(n).padStart(2,'0');
-    const el={d:document.getElementById('cd-d'),h:document.getElementById('cd-h'),
-               m:document.getElementById('cd-m'),s:document.getElementById('cd-s')};
-    if(el.d){
-      el.d.textContent=p(Math.floor(x/86400000));
-      el.h.textContent=p(Math.floor(x%86400000/3600000));
-      el.m.textContent=p(Math.floor(x%3600000/60000));
-      el.s.textContent=p(Math.floor(x%60000/1000));
-    }
+    const elD=document.getElementById('cd-d'),elH=document.getElementById('cd-h'),
+          elM=document.getElementById('cd-m'),elS=document.getElementById('cd-s');
+    if(!elD)return;
+    elD.textContent=p(Math.floor(x/86400000));
+    elH.textContent=p(Math.floor(x%86400000/3600000));
+    elM.textContent=p(Math.floor(x%3600000/60000));
+    elS.textContent=p(Math.floor(x%60000/1000));
+    // 秒數方塊跳動
+    const sBox=elS.parentElement;
+    sBox.classList.remove('cd-tick');
+    void sBox.offsetWidth; // reflow 觸發重跑
+    sBox.classList.add('cd-tick');
   },1000);
+}
+
+/* 進度條動態填入 + Scroll Reveal */
+function setupAnimations(){
+  // Scroll Reveal
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+        // 進度條在進入視野時才填滿
+        e.target.querySelectorAll('.t-fill,.t-fill-sold').forEach(bar=>{
+          const w=bar.getAttribute('data-w')||bar.style.width;
+          bar.setAttribute('data-w',w);
+          bar.style.width='0';
+          requestAnimationFrame(()=>requestAnimationFrame(()=>{bar.style.width=w;}));
+        });
+        obs.unobserve(e.target);
+      }
+    });
+  },{threshold:0.1});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+  // 定價數字 stagger
+  document.querySelectorAll('.t-price').forEach((el,i)=>{
+    el.style.animationDelay=`${i*0.12+0.1}s`;
+  });
 }
 
 /* 購買彈窗（接 tier 參數）*/
