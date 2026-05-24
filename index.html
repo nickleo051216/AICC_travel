@@ -63,8 +63,8 @@
     background:linear-gradient(165deg,var(--hero1) 0%,var(--hero2) 100%)}
   .photo-hint{position:absolute;top:14px;left:14px;font-size:11px;color:#fff;
     background:rgba(0,0,0,.3);padding:4px 10px;border-radius:20px}
-  .hero-grad{position:absolute;inset:0;background:linear-gradient(to top,rgba(15,20,18,.85) 8%,rgba(15,20,18,.05) 55%)}
-  .hero-c{position:relative;padding:0 28px 28px;color:#fff}
+  .hero-grad{position:absolute;inset:0;background:linear-gradient(to top,rgba(15,20,18,.85) 8%,rgba(15,20,18,.05) 55%);z-index:1}
+  .hero-c{position:relative;z-index:2;padding:0 28px 28px;color:#fff}
   .eyebrow{font-size:13px;letter-spacing:3px;opacity:.9;margin-bottom:10px}
   .hero h1{font-size:32px;font-weight:700;line-height:1.25;margin-bottom:12px}
   .hero .hook{font-size:15px;opacity:.92}
@@ -188,10 +188,14 @@
 
   /* ====== 動態效果 ====== */
 
-  /* Hero Ken Burns 電影感縮放 */
-  .hero{overflow:hidden}
+  /* Hero 自動輪播 + Ken Burns 電影感縮放 */
+  .hero{overflow:hidden;position:relative}
+  .hero-slides{position:absolute;inset:0;z-index:0}
+  .hero-slide{position:absolute;inset:0;background-size:cover;background-position:center;
+    opacity:0;transition:opacity 1.2s ease;will-change:opacity,transform}
+  .hero-slide.on{opacity:1;animation:kenBurns 7s ease-out forwards}
   @keyframes kenBurns{from{transform:scale(1.08)}to{transform:scale(1)}}
-  .hero-bg{animation:kenBurns 14s ease-out both}
+  .hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
 
   /* Scroll Reveal */
   .reveal{opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .6s ease}
@@ -308,6 +312,15 @@ const DATA = {
     eyebrow:'台東 · 鹿野高台 · 懶人露營',
     name:'軒沐居<br>豪華露營',
     heroImg:'images/xuanmuju/02_lotus_tent.jpg',
+    // 之後拍到影片就填這行（mp4/webm），自動取代輪播
+    heroVideo:'',
+    // Hero 自動輪播圖（沒設則 fallback 用 gallery 前 3 張）
+    heroSlides:[
+      'images/xuanmuju/02_lotus_tent.jpg',
+      'images/xuanmuju/03_palace_tent.jpg',
+      'images/xuanmuju/07_bonfire.jpg',
+      'images/xuanmuju/04_firefly.jpg',
+    ],
     gallery:[
       'images/xuanmuju/03_palace_tent.jpg',
       'images/xuanmuju/08_temple_tent.jpg',
@@ -350,6 +363,13 @@ const DATA = {
     eyebrow:'台南 · 安平 · 親子包棟 Villa',
     name:'日光森林<br>親子電梯民宿',
     heroImg:'images/sunlight/hero.jpg',
+    heroVideo:'',
+    heroSlides:[
+      'images/sunlight/hero.jpg',
+      'images/sunlight/03_slide.jpg',
+      'images/sunlight/04_living.jpg',
+      'images/sunlight/05_kids.jpg',
+    ],
     gallery:[
       'images/sunlight/01_exterior.jpg',
       'images/sunlight/03_slide.jpg',
@@ -438,7 +458,18 @@ function render(key){
   document.getElementById('app').innerHTML=`
   ${d.isDemo ? '<div class="demo-banner">⚠ 軒沐居價格尚未確定，請填入真實原價／售價後替換</div>' : ''}
   <div class="page">
-    <div class="hero"><div class="hero-bg" style="background-image:url('${d.heroImg}');background-size:cover;background-position:center">
+    <div class="hero"><div class="hero-bg">
+      ${(() => {
+        // 1. 如果有 heroVideo → 用影片
+        if (d.heroVideo) {
+          return `<video class="hero-video" src="${d.heroVideo}" autoplay muted loop playsinline preload="auto" poster="${d.heroImg||''}"></video>`;
+        }
+        // 2. 否則用 heroSlides 自動輪播（沒設則用 gallery 前 3 張）
+        const imgs = (d.heroSlides && d.heroSlides.length) ? d.heroSlides : d.gallery.slice(0,3);
+        return `<div class="hero-slides" id="heroSlides">${
+          imgs.map((u,i)=>`<div class="hero-slide${i===0?' on':''}" style="background-image:url('${u}')"></div>`).join('')
+        }</div>`;
+      })()}
       <div class="hero-grad"></div>
       <div class="hero-c"><div class="eyebrow">${d.eyebrow}</div>
         <h1 class="serif">${d.name}</h1><p class="hook">${d.hook}</p></div>
@@ -553,6 +584,28 @@ function setupAnimations(){
   });
   // 初始化輪播
   initCarousel();
+  // Hero 自動輪播（5 秒切換 + 重啟 Ken Burns 動畫）
+  initHeroSlides();
+}
+
+let heroTimer=null;
+function initHeroSlides(){
+  if(heroTimer){clearInterval(heroTimer);heroTimer=null;}
+  const box=document.getElementById('heroSlides');
+  if(!box) return; // 用了 heroVideo 就沒這個容器
+  const slides=box.querySelectorAll('.hero-slide');
+  if(slides.length<2) return;
+  let i=0;
+  heroTimer=setInterval(()=>{
+    slides[i].classList.remove('on');
+    i=(i+1)%slides.length;
+    // 重新觸發 Ken Burns 動畫
+    const next=slides[i];
+    next.style.animation='none';
+    void next.offsetWidth;
+    next.style.animation='';
+    next.classList.add('on');
+  },4000);
 }
 
 /* 購買彈窗（接 tier 參數）*/
