@@ -29,12 +29,21 @@
   .page{max-width:480px;margin:0 auto;background:var(--paper);min-height:100vh;
     box-shadow:0 0 60px rgba(0,0,0,.3);overflow:hidden;padding-bottom:80px}
 
-  /* ====== 照片牆 ====== */
-  .gallery{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:14px}
-  .gallery img{width:100%;object-fit:cover;border-radius:8px;display:block;cursor:pointer;transition:.2s}
-  .gallery img:hover{opacity:.88}
-  .gallery img:first-child{grid-column:1/-1;height:200px}
-  .gallery img:not(:first-child){height:130px}
+  /* ====== 照片輪播 ====== */
+  .carousel{position:relative;width:100%;overflow:hidden;border-radius:14px;background:#111;margin-top:14px;touch-action:pan-y}
+  .carousel-track{display:flex;transition:transform .38s cubic-bezier(.4,0,.2,1);will-change:transform}
+  .carousel-track img{width:100%;flex-shrink:0;height:240px;object-fit:cover;display:block;cursor:pointer}
+  .carousel-dots{display:flex;justify-content:center;gap:6px;padding:10px 0 4px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--sand);transition:all .25s;cursor:pointer}
+  .dot.on{background:var(--accent);width:20px;border-radius:4px}
+  .carousel-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.38);border:none;
+    color:#fff;font-size:20px;width:36px;height:36px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;z-index:5;backdrop-filter:blur(4px);transition:.2s}
+  .carousel-btn:hover{background:rgba(0,0,0,.6)}
+  .carousel-btn.prev{left:10px}
+  .carousel-btn.next{right:10px}
+  .carousel-count{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.45);color:#fff;
+    font-size:12px;padding:3px 10px;border-radius:20px;backdrop-filter:blur(4px)}
 
   /* ====== 燈箱 ====== */
   .lb{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99;display:none;align-items:center;justify-content:center}
@@ -401,7 +410,8 @@ function render(key){
   const points=d.points.map(p=>`<div class="point"><span class="em">${p[0]}</span><h4>${p[1]}</h4><p>${p[2]}</p></div>`).join('');
   const faq=d.faq.map(f=>`<div><div class="faq-q" onclick="toggleFaq(this)">${f[0]}<span class="ic">+</span></div>
     <div class="faq-a"><div>${f[1]}</div></div></div>`).join('');
-  const galleryHtml=d.gallery.map((u,i)=>`<img src="${u}" alt="民宿照片${i+1}" loading="lazy" onclick="openLb('${u}')">`).join('');
+  const slides=d.gallery.map((u,i)=>`<img src="${u}" alt="民宿照片${i+1}" loading="lazy" onclick="openLb('${u}')">`).join('');
+  const dots=d.gallery.map((_,i)=>`<div class="dot${i===0?' on':''}" onclick="goSlide(${i})"></div>`).join('');
   // 分級定價卡
   const lowestAvail=d.tiers.find(t=>t.sold<t.total);
   const tiersHtml=d.tiers.map(t=>{
@@ -463,7 +473,14 @@ function render(key){
       <div class="points">${points}</div></section>
 
     <section class="reveal" style="padding-top:6px"><div class="label">實景照片</div>
-      <div class="gallery">${galleryHtml}</div></section>
+      <div class="carousel" id="carousel" onmousedown="cStart(event)" ontouchstart="cStart(event)">
+        <div class="carousel-track" id="cTrack">${slides}</div>
+        <button class="carousel-btn prev" onclick="goSlide(cIdx-1)">‹</button>
+        <button class="carousel-btn next" onclick="goSlide(cIdx+1)">›</button>
+        <div class="carousel-count"><span id="cNum">1</span> / ${d.gallery.length}</div>
+      </div>
+      <div class="carousel-dots" id="cDots">${dots}</div>
+    </section>
 
     <section class="trust reveal"><div class="label">真實評價</div>
       <div class="stars">★★★★★</div>
@@ -536,6 +553,8 @@ function setupAnimations(){
   document.querySelectorAll('.t-price').forEach((el,i)=>{
     el.style.animationDelay=`${i*0.12+0.1}s`;
   });
+  // 初始化輪播
+  initCarousel();
 }
 
 /* 購買彈窗（接 tier 參數）*/
@@ -573,6 +592,62 @@ function toggleFaq(q){q.classList.toggle('open');const a=q.nextElementSibling;a.
 document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeBuy();});
 function openLb(src){document.getElementById('lb-img').src=src;document.getElementById('lb').classList.add('show');}
 function closeLb(){document.getElementById('lb').classList.remove('show');}
+
+/* ====== 輪播 ====== */
+let cIdx=0, cTotal=0, cAutoTimer, cDragX=0, cDragging=false;
+
+function goSlide(n){
+  const track=document.getElementById('cTrack');
+  const dots=document.getElementById('cDots');
+  if(!track)return;
+  cTotal=track.children.length;
+  cIdx=(n+cTotal)%cTotal;
+  track.style.transform=`translateX(-${cIdx*100}%)`;
+  document.getElementById('cNum').textContent=cIdx+1;
+  if(dots){
+    [...dots.children].forEach((d,i)=>d.classList.toggle('on',i===cIdx));
+  }
+}
+
+function initCarousel(){
+  cIdx=0;
+  const track=document.getElementById('cTrack');
+  if(track){cTotal=track.children.length; goSlide(0);}
+  clearInterval(cAutoTimer);
+  cAutoTimer=setInterval(()=>goSlide(cIdx+1),4000);
+}
+
+// 觸控 / 滑鼠拖曳
+function cStart(e){
+  cDragging=true;
+  cDragX=e.touches?e.touches[0].clientX:e.clientX;
+  clearInterval(cAutoTimer);
+  const el=document.getElementById('carousel');
+  if(el){
+    el.onmousemove=el.ontouchmove=cMove;
+    el.onmouseup=el.ontouchend=cEnd;
+    el.onmouseleave=cEnd;
+  }
+}
+function cMove(e){
+  if(!cDragging)return;
+  const x=e.touches?e.touches[0].clientX:e.clientX;
+  const track=document.getElementById('cTrack');
+  if(track) track.style.transform=`translateX(calc(-${cIdx*100}% + ${x-cDragX}px))`;
+}
+function cEnd(e){
+  if(!cDragging)return;
+  cDragging=false;
+  const x=e.changedTouches?e.changedTouches[0].clientX:(e.clientX||cDragX);
+  const diff=cDragX-x;
+  if(Math.abs(diff)>40) goSlide(diff>0?cIdx+1:cIdx-1);
+  else goSlide(cIdx);
+  cAutoTimer=setInterval(()=>goSlide(cIdx+1),4000);
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft')goSlide(cIdx-1);
+  if(e.key==='ArrowRight')goSlide(cIdx+1);
+});
 
 render('xuanmuju');
 </script>
