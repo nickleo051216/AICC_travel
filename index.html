@@ -150,6 +150,18 @@
   .trust .lead{color:#fff;margin-top:10px}
   .guarantee{display:flex;gap:10px;margin-top:18px;background:rgba(255,255,255,.08);padding:14px;border-radius:12px;font-size:14px}
 
+  /* ====== 客戶見證卡片 ====== */
+  .testi-list{display:flex;flex-direction:column;gap:12px;margin-top:18px}
+  .testi{background:rgba(255,255,255,.06);border-radius:12px;padding:14px 16px;border-left:3px solid var(--accent)}
+  .testi-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .testi-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0}
+  .testi-meta{flex:1;min-width:0}
+  .testi-name{font-size:14px;font-weight:600;color:#fff;line-height:1.2}
+  .testi-sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:2px}
+  .testi-stars{color:#F5C84B;font-size:13px;letter-spacing:1px;flex-shrink:0}
+  .testi-text{font-size:13px;color:rgba(255,255,255,.85);line-height:1.65}
+
   .faq-q{cursor:pointer;padding:16px 0;font-size:15px;font-weight:500;border-bottom:1px solid var(--line);
     display:flex;justify-content:space-between;gap:10px}
   .faq-q .ic{color:var(--accent);font-size:20px;transition:.2s;flex-shrink:0}
@@ -368,6 +380,14 @@ const DATA = {
             ['🐶','寵物友善','毛孩同行(豪華房+清潔費)'],['🔥','活動超多','螢火蟲/營火/電影夜']],
     rating:'4.8', reviews:'Google 與 IG 真實好評',
     review:'「免搭帳超方便，孩子玩到不想走，晚上營火很療癒。」',
+    testimonials:[
+      {name:'陳小姐', from:'Google 評論', rating:5, date:'2025/4',
+       text:'帶兩個小孩去，蓮花帳裡有冷氣真的差很多，5 月天還算涼快。含餐券省超多，餐點是台式合菜不會踩雷。唯一缺點是離高速公路有段距離，但這也是它安靜的原因吧。'},
+      {name:'林先生', from:'IG @lindaily_tw', rating:5, date:'2025/3',
+       text:'熱氣球嘉年華期間住這完全是賺到，早上 5 點出帳就看到一堆球，根本不用跑遠。價錢比直接訂便宜將近一半。'},
+      {name:'吳媽媽', from:'Google 評論', rating:4, date:'2024/12',
+       text:'帶毛孩第一次去 glamping，狗狗玩翻了，營火還可以烤棉花糖。扣一星是因為晚上比較涼要記得帶薄外套，但業主後來有提醒。整體推。'}
+    ],
     faq:[['買了怎麼預約日期？','購買後拿到電子券，加官方 LINE @111pwplh 告知想住的日期，我們幫你跟營區確認。'],
          ['暑假可以用嗎？','暑假熱氣球季不適用本券，其餘平日(週日～週五)皆可，假日需洽詢加價。'],
          ['沒用到能退嗎？','未核銷的券在效期內可申請全額退。']],
@@ -418,6 +438,14 @@ const DATA = {
             ['🛗','電梯民宿','長輩娃娃車都方便'],['🏖','安平老街','走路就到，吃喝玩買']],
     rating:'4.9', reviews:'親子客群一致好評',
     review:'「滑梯房小孩玩瘋，包棟很自在，離安平老街超近！」',
+    testimonials:[
+      {name:'許家三寶媽', from:'Google 評論', rating:5, date:'2025/4',
+       text:'三個孩子在滑梯房直接尖叫，整棟包下來大人小孩都自在。重點是電梯民宿！推娃娃車跟帶我爸完全沒問題。走到安平老街吃豆花真的 3 分鐘。'},
+      {name:'Y. Lin', from:'Google 評論', rating:5, date:'2025/2',
+       text:'8 個大學同學包棟超划算，KTV 唱到半夜也沒人吵，麻將桌剛好用上。Check-in 服務算很到位，會手繪附近吃喝地圖。'},
+      {name:'王太太', from:'IG @kawai_mama', rating:4, date:'2024/11',
+       text:'親子設施真的太多，球池一進去小孩 30 分鐘出不來。包棟價分攤下來每人不到 2000，比訂飯店還划算。少一星是 wifi 訊號在二樓比較弱，但其實小孩根本不需要。'}
+    ],
     faq:[['買了怎麼預約日期？','購買後拿到電子券，加客服 LINE @SEF2174H 告知想住日期，我們協助確認房況。'],
          ['可以加人嗎？','可加購房型，一間四人房 +3000，最多五間房 20 位，請先洽詢。'],
          ['沒用到能退嗎？','未核銷的券在效期內可申請全額退。']],
@@ -532,6 +560,17 @@ function render(key){
       <div class="stars">★★★★★</div>
       <p class="lead serif">${d.rating} / 5.0 · ${d.reviews}</p>
       <p style="color:rgba(255,255,255,.75);font-size:14px;margin-top:6px">${d.review}</p>
+      <div class="testi-list">${
+        (d.testimonials||[]).map(t=>{
+          const avatar=t.name.charAt(0);
+          const stars='★'.repeat(t.rating)+'☆'.repeat(5-t.rating);
+          return `<div class="testi"><div class="testi-head"><div class="testi-avatar">${avatar}</div>
+            <div class="testi-meta"><div class="testi-name">${t.name}</div>
+            <div class="testi-sub">${t.from} · ${t.date}</div></div>
+            <div class="testi-stars">${stars}</div></div>
+            <div class="testi-text">${t.text}</div></div>`;
+        }).join('')
+      }</div>
       <div class="guarantee"><div>🛡 購券後收到電子券序號，到店出示即可。<b style="color:#fff">未使用可全額退</b>，零風險。</div></div></section>
 
     <section><div class="label">常見問題</div>${faq}
