@@ -60,8 +60,40 @@
   .hero h1{font-size:32px;font-weight:700;line-height:1.25;margin-bottom:12px}
   .hero .hook{font-size:15px;opacity:.92}
 
-  .urgent{background:var(--accent);color:#fff;text-align:center;padding:11px;font-size:14px;font-weight:500}
-  .urgent b{font-variant-numeric:tabular-nums}
+  /* ====== 大倒數（募資風）====== */
+  .cd-block{background:linear-gradient(135deg,#1a1a18 0%,#2d1a0e 100%);color:#fff;padding:22px 16px;text-align:center}
+  .cd-title{font-size:11px;letter-spacing:3px;opacity:.65;margin-bottom:14px}
+  .cd-boxes{display:flex;justify-content:center;align-items:flex-start;gap:5px}
+  .cd-box{background:rgba(255,255,255,.13);border-radius:10px;padding:10px 13px;min-width:58px}
+  .cd-box span{display:block;font-size:38px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-1px}
+  .cd-box small{display:block;font-size:11px;opacity:.6;margin-top:5px;letter-spacing:1px}
+  .cd-sep{font-size:32px;font-weight:700;opacity:.35;padding-top:8px}
+  .cd-sub{font-size:13px;opacity:.7;margin-top:14px;letter-spacing:.5px}
+
+  /* ====== 分級定價卡（募資風）====== */
+  .tiers{display:flex;flex-direction:column;gap:14px}
+  .tier{border-radius:16px;overflow:hidden;border:2px solid var(--line);background:var(--paper)}
+  .tier.hot{border-color:var(--accent);box-shadow:0 6px 24px rgba(0,0,0,.13)}
+  .tier.sold{opacity:.58;border-style:dashed}
+  .tier-head{background:var(--ink);color:var(--cream);padding:13px 20px;display:flex;align-items:center;justify-content:space-between}
+  .tier-name{font-size:14px;font-weight:700}
+  .tier-tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
+  .tag-hot{background:var(--accent);color:#fff}
+  .tag-sold{background:#888;color:#fff}
+  .tag-last{background:#D63838;color:#fff}
+  .tier-body{padding:18px 20px}
+  .t-price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+  .t-price{font-size:40px;font-weight:700;color:var(--accent-dark);line-height:1}
+  .t-price .cur{font-size:18px;font-weight:500}
+  .t-old{font-size:14px;color:var(--ink-soft);text-decoration:line-through}
+  .t-save{display:inline-block;background:var(--sand);color:var(--accent-dark);font-size:12px;font-weight:700;padding:3px 10px;border-radius:6px;margin:8px 0 12px}
+  .t-includes{font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px}
+  .t-stock-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+  .t-remain{color:var(--accent-dark);font-weight:700}
+  .t-bar{height:6px;background:var(--sand);border-radius:6px;overflow:hidden;margin-bottom:14px}
+  .t-fill{height:100%;border-radius:6px;background:var(--accent)}
+  .t-fill-sold{background:#aaa}
+  .btn-sold{background:#ccc !important;color:#999 !important;cursor:not-allowed !important;box-shadow:none !important;font-size:15px !important}
 
   section{padding:32px 28px}
   .label{font-size:12px;letter-spacing:2px;color:var(--accent);font-weight:700;margin-bottom:14px}
@@ -234,6 +266,12 @@ const DATA = {
       'images/xuanmuju/07_bonfire.jpg',
       'images/xuanmuju/05_movie_night.jpg',
     ],
+    tiers:[
+      {name:'🐣 早鳥限定', tag:'sold', price:'1,680', oldPrice:'3,900', save:'立省 NT$2,220',
+       includes:'蓮花四人家庭帳・含餐券<br>台東鹿野高台・平日（週日～週五）', sold:2, total:2},
+      {name:'⚡ 限時特惠', tag:'hot',  price:'1,980', oldPrice:'3,900', save:'立省 NT$1,920',
+       includes:'蓮花四人家庭帳・含餐券<br>台東鹿野高台・平日（週日～週五）', sold:0, total:2},
+    ],
     hook:'在熱氣球的故鄉，免搭帳、開空調，睡進一夜星空。',
     lead:'你買的不是一晚，是「免準備、開車到了就玩」的台東。',
     feels:['空調豪華帳篷，免搭免收，行李放下就入住','鄰近熱氣球嘉年華高台，抬頭就是球海',
@@ -269,6 +307,12 @@ const DATA = {
       'images/sunlight/04_living.jpg',
       'images/sunlight/02_room.jpg',
       'images/sunlight/05_kids.jpg',
+    ],
+    tiers:[
+      {name:'🐣 早鳥限定', tag:'sold', price:'2,800', oldPrice:'17,000', save:'立省 NT$14,200',
+       includes:'八位包棟・2間四人親子房<br>台南安平・平日（週一～週四）', sold:1, total:1},
+      {name:'🔥 最後一張', tag:'last', price:'3,400', oldPrice:'17,000', save:'立省 NT$13,600',
+       includes:'八位包棟・2間四人親子房<br>台南安平・平日（週一～週四）', sold:0, total:1},
     ],
     hook:'整棟包下，溜滑梯、球池、KTV 一次玩到飽，走路到安平老街。',
     lead:'你買的不是住宿，是「一家人＋朋友佔下整棟」的尖叫聲。',
@@ -313,10 +357,33 @@ function render(key){
   const feels=d.feels.map(f=>`<li><span class="dot">●</span><div>${f}</div></li>`).join('');
   const meta=d.meta.map(m=>`<div><span>${m[0]}</span><b>${m[1]}</b></div>`).join('');
   const points=d.points.map(p=>`<div class="point"><span class="em">${p[0]}</span><h4>${p[1]}</h4><p>${p[2]}</p></div>`).join('');
-  const stockPct=Math.round(d.sold/(d.sold+d.left)*100);
   const faq=d.faq.map(f=>`<div><div class="faq-q" onclick="toggleFaq(this)">${f[0]}<span class="ic">+</span></div>
     <div class="faq-a"><div>${f[1]}</div></div></div>`).join('');
   const galleryHtml=d.gallery.map((u,i)=>`<img src="${u}" alt="民宿照片${i+1}" loading="lazy" onclick="openLb('${u}')">`).join('');
+  // 分級定價卡
+  const lowestAvail=d.tiers.find(t=>t.sold<t.total);
+  const tiersHtml=d.tiers.map(t=>{
+    const isSold=t.sold>=t.total;
+    const pct=Math.round(t.sold/t.total*100);
+    const tagCls=isSold?'tag-sold':(t.tag==='last'?'tag-last':'tag-hot');
+    const tagTxt=isSold?'已售完':(t.tag==='last'?'最後一張':'推薦');
+    const btnHtml=isSold
+      ?`<button class="btn btn-sold" disabled>已售完</button>`
+      :`<button class="btn btn-buy" onclick="openBuy('${t.price}','${t.name}','${d.priceOld}')">立即搶購 · NT$${t.price}</button>`;
+    return `<div class="tier ${isSold?'sold':t.tag==='last'?'hot':t.tag==='hot'?'hot':''}">
+      <div class="tier-head"><span class="tier-name">${t.name}</span><span class="tier-tag ${tagCls}">${tagTxt}</span></div>
+      <div class="tier-body">
+        <div class="t-price-row"><span class="t-price"><span class="cur">NT$</span>${t.price}</span>
+          <span class="t-old">原價 NT$${t.oldPrice}</span></div>
+        <span class="t-save">${t.save}</span>
+        <p class="t-includes">${t.includes}</p>
+        <div class="t-stock-row"><span>已搶購 ${t.sold} 張</span><span class="t-remain">剩 ${t.total-t.sold} 張</span></div>
+        <div class="t-bar"><div class="${isSold?'t-fill t-fill-sold':'t-fill'}" style="width:${pct}%"></div></div>
+        ${btnHtml}
+      </div></div>`;
+  }).join('');
+  // sticky bar 顯示最低可購價
+  const stickyPrice=lowestAvail?lowestAvail.price:d.tiers[d.tiers.length-1].price;
 
   document.getElementById('app').innerHTML=`
   ${d.isDemo ? '<div class="demo-banner">⚠ 軒沐居價格尚未確定，請填入真實原價／售價後替換</div>' : ''}
@@ -327,25 +394,28 @@ function render(key){
         <h1 class="serif">${d.name}</h1><p class="hook">${d.hook}</p></div>
     </div></div>
 
-    <div class="urgent">🔥 限量優惠倒數 <b id="cd">--</b></div>
+    <div class="cd-block">
+      <div class="cd-title">⏰ 限時搶購倒數</div>
+      <div class="cd-boxes">
+        <div class="cd-box"><span id="cd-d">--</span><small>天</small></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-box"><span id="cd-h">--</span><small>時</small></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-box"><span id="cd-m">--</span><small>分</small></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-box"><span id="cd-s">--</span><small>秒</small></div>
+      </div>
+      <div class="cd-sub">🔥 早鳥名額有限，售完即止</div>
+    </div>
 
     <section><div class="label">這趟旅行</div>
       <p class="lead serif">${d.lead}</p>
       <ul class="feels" style="margin-top:16px">${feels}</ul></section>
 
-    <section style="padding-top:6px"><div class="label">限量優惠卷</div>
-      <div class="offer">
-        <div class="offer-top"><span class="name">${d.offerName}</span><span class="badge">${d.badge}</span></div>
-        <div class="offer-body">
-          ${d.isDemo ? '<span class="demo-tag">示範價・待填</span>' : ''}
-          <div class="price-row"><span class="price-now"><span class="cur">NT$</span>${d.priceNow}</span>
-            <span class="price-old">原價 NT$${d.priceOld}</span></div>
-          <span class="save">${d.save}</span>
-          <div class="meta">${meta}</div>
-          <div class="stock-txt"><span>已售出 ${d.sold} 張</span><span>僅剩 ${d.left} 張</span></div>
-          <div class="stock-bar"><div class="stock-fill" style="width:${stockPct}%"></div></div>
-          <button class="btn btn-buy" style="margin-top:18px" onclick="openBuy()">立即購買 · NT$${d.priceNow}</button>
-        </div></div></section>
+    <section style="padding-top:6px"><div class="label">選擇方案</div>
+      <div class="tiers">${tiersHtml}</div>
+      <div class="meta" style="margin-top:18px">${meta}</div>
+    </section>
 
     <section style="padding-top:6px"><div class="label">為什麼選這裡</div>
       <div class="points">${points}</div></section>
@@ -364,39 +434,48 @@ function render(key){
 
     <footer class="foot">
       <p class="lead serif" style="font-size:18px">名額有限，手刀帶走這晚。</p>
-      <button class="btn btn-buy" style="margin-top:14px" onclick="openBuy()">立即購買 · NT$${d.priceNow}</button>
+      <button class="btn btn-buy" style="margin-top:14px" onclick="openBuy('${stickyPrice}','${lowestAvail?lowestAvail.name:''}','${d.priceOld}')">立即搶購 · 早鳥 NT$${stickyPrice}</button>
       <p class="small">本優惠卷由 <b>微旅嚴選</b> 與民宿合作銷售<br>
         民宿聯絡：${d.phone}<br>
         客服 LINE：<a href="${d.line}">加入 LINE 客服</a></p>
     </footer>
   </div>
   <div class="sticky">
-    <div class="p"><div class="n">NT$${d.priceNow}</div><div class="o">原價 NT$${d.priceOld}</div></div>
-    <button class="btn btn-buy" onclick="openBuy()">立即購買</button>
+    <div class="p"><div class="n">早鳥 NT$${stickyPrice}</div><div class="o">原價 NT$${d.priceOld}</div></div>
+    <button class="btn btn-buy" onclick="openBuy('${stickyPrice}','${lowestAvail?lowestAvail.name:''}','${d.priceOld}')">立即搶購</button>
   </div>`;
   startCountdown();
 }
 
-/* 倒數 */
+/* 大倒數 */
 let cdTimer;
 function startCountdown(){
   clearInterval(cdTimer);
-  const end=Date.now()+(2*86400000)+(11*3600000);
+  const end=Date.now()+(5*86400000)+(14*3600000); // 5天14小時後截止
   cdTimer=setInterval(()=>{
     let x=end-Date.now(); if(x<0)x=0;
     const p=n=>String(n).padStart(2,'0');
-    const el=document.getElementById('cd');
-    if(el) el.textContent=`${p(Math.floor(x/86400000))} 天 ${p(Math.floor(x%86400000/3600000))}:${p(Math.floor(x%3600000/60000))}:${p(Math.floor(x%60000/1000))}`;
+    const el={d:document.getElementById('cd-d'),h:document.getElementById('cd-h'),
+               m:document.getElementById('cd-m'),s:document.getElementById('cd-s')};
+    if(el.d){
+      el.d.textContent=p(Math.floor(x/86400000));
+      el.h.textContent=p(Math.floor(x%86400000/3600000));
+      el.m.textContent=p(Math.floor(x%3600000/60000));
+      el.s.textContent=p(Math.floor(x%60000/1000));
+    }
   },1000);
 }
 
-/* 購買彈窗 */
-function openBuy(){
+/* 購買彈窗（接 tier 參數）*/
+function openBuy(tierPrice,tierName,oldPrice){
   const d=DATA[current];
-  document.getElementById('m-name').textContent=d.offerName;
-  document.getElementById('m-now').textContent='NT$'+d.priceNow;
-  document.getElementById('m-old').textContent='NT$'+d.priceOld;
-  document.getElementById('m-pay').textContent='NT$'+d.priceNow;
+  const price=tierPrice||d.priceNow;
+  const name=tierName||d.offerName;
+  const old=oldPrice||d.priceOld;
+  document.getElementById('m-name').textContent=name;
+  document.getElementById('m-now').textContent='NT$'+price;
+  document.getElementById('m-old').textContent='NT$'+old;
+  document.getElementById('m-pay').textContent='NT$'+price;
   document.getElementById('m-line').href=d.line;
   document.getElementById('vcode').textContent=(current==='xuanmuju'?'XMJ-':'SLF-')+Math.random().toString(36).slice(2,7).toUpperCase();
   document.getElementById('step-pay').style.display='block';
