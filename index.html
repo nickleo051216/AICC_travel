@@ -290,6 +290,8 @@
         <input type="text" id="f-name" placeholder="請輸入真實姓名">
         <label>手機號碼</label>
         <input type="tel" id="f-phone" placeholder="09xxxxxxxx">
+        <label>Email（寄送訂單確認信）</label>
+        <input type="email" id="f-email" placeholder="your@email.com">
         <label>取件超商（7-11 貨到付款）</label>
         <div class="store-picker">
           <button type="button" class="btn-store-pick" onclick="pickStore()">
@@ -319,8 +321,8 @@
       </div>
       <div class="cod-note" style="text-align:left;margin:14px 0">
         📋 <b>接下來的步驟：</b><br>
-        1️⃣ 我們收到訂單後 24 小時內會透過 LINE 確認<br>
-        2️⃣ 確認後寄出實體優惠卷<br>
+        1️⃣ 訂單確認信已寄到您的信箱（請留意垃圾郵件匣）<br>
+        2️⃣ 我們會在 24 小時內透過 LINE 確認並寄出優惠卷<br>
         3️⃣ 到超商取貨時付款即可入手！
       </div>
       <a id="m-line" href="#" class="btn btn-line">加 LINE 即時確認訂單</a>
@@ -688,12 +690,14 @@ const N8N_WEBHOOK = 'https://nickleo9.zeabur.app/webhook/weilu-order';
 function submitOrder(){
   const name    = document.getElementById('f-name').value.trim();
   const phone   = document.getElementById('f-phone').value.trim();
+  const email   = document.getElementById('f-email').value.trim();
   const storeId = document.getElementById('f-store-id').value;
   const storeName = document.getElementById('f-store-name').value;
   const storeAddr = document.getElementById('f-store-addr').value;
 
   if(!name){alert('請填寫姓名');return;}
   if(!phone||!/^09\d{8}$/.test(phone)){alert('請填寫正確的手機號碼（09開頭共10碼）');return;}
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Email 格式不正確');return;}
   if(!storeId){alert('請點「📍 選擇取貨門市」選擇 7-11 取貨門市');return;}
 
   /* 前端直接產生訂單號（格式與 n8n 相同） */
@@ -713,7 +717,7 @@ function submitOrder(){
     mode   : 'no-cors',
     headers: { 'Content-Type': 'text/plain' },
     body   : JSON.stringify({
-      property: current, propertyName, name, phone,
+      property: current, propertyName, name, phone, email,
       store: '7-ELEVEN',
       storeId, storeName, storeAddress: storeAddr,
       orderId, price, ts: now.toISOString()
@@ -740,6 +744,7 @@ function pickStore(){
     current,
     name : document.getElementById('f-name').value,
     phone: document.getElementById('f-phone').value,
+    email: document.getElementById('f-email').value,
     tierPrice: document.getElementById('m-now').textContent,
     tierName : document.getElementById('m-name').textContent,
     tierOld  : document.getElementById('m-old').textContent,
@@ -792,6 +797,7 @@ function restoreFromCVS(){
     openBuy(price, snap.tierName, old);
     document.getElementById('f-name').value  = snap.name  || '';
     document.getElementById('f-phone').value = snap.phone || '';
+    document.getElementById('f-email').value = snap.email || '';
   }
 
   /* 2. 填入店資訊 */
