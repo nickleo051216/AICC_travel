@@ -703,6 +703,9 @@ function submitOrder(){
   const ymd = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
   const orderId = `${prefix}-${ymd}-${String(Math.floor(Math.random()*9000)+1000)}`;
 
+  /* 從 modal 取得使用者選的實際價格 */
+  const price = parseInt((document.getElementById('m-now').textContent||'0').replace(/[^\d]/g,''), 10);
+
   /* Fire-and-forget：no-cors + text/plain 避免 CORS preflight，
      n8n 在背景處理，不阻塞使用者 */
   fetch(N8N_WEBHOOK, {
@@ -713,7 +716,7 @@ function submitOrder(){
       property: current, propertyName, name, phone,
       store: '7-ELEVEN',
       storeId, storeName, storeAddress: storeAddr,
-      orderId, ts: now.toISOString()
+      orderId, price, ts: now.toISOString()
     })
   }).catch(()=>{});
 
