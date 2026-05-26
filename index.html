@@ -268,6 +268,16 @@
   .loading-overlay p{font-size:14px;color:var(--ink-soft);font-weight:500}
 
   /* 訂單錯誤提示 */
+  /* 數量選擇器 */
+  .qty-row{display:flex;align-items:center;gap:10px;margin:10px 0 4px}
+  .qty-row label{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap}
+  .qty-row .qty-hint{font-size:11px;color:var(--ink-soft);margin-left:auto}
+  .qty-btns{display:flex;align-items:center;gap:0;border:1.5px solid var(--sand-dark,#d6cfc4);border-radius:8px;overflow:hidden}
+  .qty-btns button{width:34px;height:34px;border:none;background:var(--sand);color:var(--ink);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+  .qty-btns button:hover{background:var(--sand-dark,#d6cfc4)}
+  .qty-btns button:disabled{opacity:.35;cursor:not-allowed}
+  .qty-btns span{width:30px;text-align:center;font-size:15px;font-weight:600;color:var(--ink)}
+
   .order-error{display:none;background:#FFF0F0;border:1px solid #E8AAAA;border-radius:10px;
     padding:12px;font-size:13px;color:#B91C1C;margin:10px 0;line-height:1.6;text-align:left}
   .order-error.show{display:block}
@@ -299,8 +309,17 @@
       </div>
       <h3 class="serif">填寫訂購資料</h3>
       <p id="m-name" style="font-size:13px;color:var(--ink-soft);margin-top:4px"></p>
+      <div class="qty-row">
+        <label>購買數量</label>
+        <div class="qty-btns">
+          <button type="button" id="qty-minus" onclick="changeQty(-1)">−</button>
+          <span id="qty-val">1</span>
+          <button type="button" id="qty-plus" onclick="changeQty(1)">+</button>
+        </div>
+        <span class="qty-hint">每人限購 2 張</span>
+      </div>
       <div class="sum">
-        <div><span>優惠卷 × 1</span><span id="m-now"></span></div>
+        <div><span id="sum-label">優惠卷 × 1</span><span id="m-now"></span></div>
         <div><span>原價</span><span id="m-old" style="text-decoration:line-through;color:var(--ink-soft)"></span></div>
         <div class="tot"><span>🏪 超商貨到付款</span><span id="m-pay" style="color:var(--accent-dark)"></span></div>
       </div>
@@ -439,8 +458,8 @@ const DATA = {
     tiers:[
       {name:'🐣 早鳥限定', tag:'sold', price:'3,980', oldPrice:'17,000', save:'立省 NT$13,020',
        includes:'八位包棟・2間四人親子房<br>台南安平・平日（週一～週四）', sold:1, total:1},
-      {name:'🔥 最後一張', tag:'last', price:'3,480', oldPrice:'17,000', save:'立省 NT$13,520',
-       includes:'八位包棟・2間四人親子房<br>台南安平・平日（週一～週四）', sold:0, total:1},
+      {name:'🔥 限時特惠', tag:'hot', price:'3,480', oldPrice:'17,000', save:'立省 NT$13,520',
+       includes:'八位包棟・2間四人親子房<br>台南安平・平日（週一～週四）', sold:0, total:3},
     ],
     hook:'整棟包下，溜滑梯、球池、KTV 一次玩到飽，走路到安平老街。',
     lead:'你買的不是住宿，是「一家人＋朋友佔下整棟」的尖叫聲。',
@@ -455,7 +474,7 @@ const DATA = {
           ['適用日','平日週一～週四（不加價）'],['寒暑假','週一～週四 +3,000'],
           ['加房','每間四人房 +3,000（最多五間20位）'],['不適用','週五～週日、春節、連假、跨年'],
           ['使用期限','2026/7/31 前'],['取得方式','超商貨到付款']],
-    sold:0, left:1,
+    sold:0, left:3,
     points:[['🛝','主題滑梯房','室內溜滑梯＋球池'],['🎤','KTV 麻將','整棟你們自己嗨'],
             ['🛗','電梯民宿','長輩娃娃車都方便'],['🏖','安平老街','走路就到，吃喝玩買']],
     rating:'4.9', reviews:'親子客群一致好評',
@@ -502,12 +521,12 @@ function render(key){
   const tiersHtml=d.tiers.map(t=>{
     const isSold=t.sold>=t.total;
     const pct=Math.round(t.sold/t.total*100);
-    const tagCls=isSold?'tag-sold':(t.tag==='last'?'tag-last':'tag-hot');
-    const tagTxt=isSold?'已售完':(t.tag==='last'?'最後一張':'推薦');
+    const tagCls=isSold?'tag-sold':'tag-hot';
+    const tagTxt=isSold?'已售完':'推薦';
     const btnHtml=isSold
       ?`<button class="btn btn-sold" disabled>已售完</button>`
       :`<button class="btn btn-buy" onclick="openBuy('${t.price}','${t.name}','${d.priceOld}')">立即搶購 · NT$${t.price}</button>`;
-    return `<div class="tier ${isSold?'sold':t.tag==='last'?'hot':t.tag==='hot'?'hot':''}">
+    return `<div class="tier ${isSold?'sold':t.tag==='hot'?'hot':''}">
       <div class="tier-head"><span class="tier-name">${t.name}</span><span class="tier-tag ${tagCls}">${tagTxt}</span></div>
       <div class="tier-body">
         <div class="t-price-row"><span class="t-price"><span class="cur">NT$</span>${t.price}</span>
@@ -687,12 +706,19 @@ function initHeroSlides(){
 }
 
 /* 購買彈窗（接 tier 參數）*/
+let _unitPrice=0;
 function openBuy(tierPrice,tierName,oldPrice){
   const d=DATA[current];
   const price=tierPrice||d.priceNow;
   const name=tierName||d.offerName;
   const old=oldPrice||d.priceOld;
+  _unitPrice=parseInt(String(price).replace(/[^\d]/g,''),10);
   document.getElementById('m-name').textContent=name;
+  /* 重置數量為 1 */
+  document.getElementById('qty-val').textContent='1';
+  document.getElementById('qty-minus').disabled=true;
+  document.getElementById('qty-plus').disabled=false;
+  document.getElementById('sum-label').textContent='優惠卷 × 1';
   document.getElementById('m-now').textContent='NT$'+price;
   document.getElementById('m-old').textContent='NT$'+old;
   document.getElementById('m-pay').textContent='NT$'+price;
@@ -701,6 +727,18 @@ function openBuy(tierPrice,tierName,oldPrice){
   document.getElementById('step-pay').style.display='block';
   document.getElementById('step-done').classList.remove('show');
   document.getElementById('modal').classList.add('show');
+}
+function changeQty(delta){
+  const el=document.getElementById('qty-val');
+  let q=parseInt(el.textContent,10)+delta;
+  if(q<1)q=1; if(q>2)q=2;
+  el.textContent=q;
+  document.getElementById('qty-minus').disabled=(q<=1);
+  document.getElementById('qty-plus').disabled=(q>=2);
+  const total=_unitPrice*q;
+  document.getElementById('sum-label').textContent='優惠卷 × '+q;
+  document.getElementById('m-now').textContent='NT$'+total.toLocaleString();
+  document.getElementById('m-pay').textContent='NT$'+total.toLocaleString();
 }
 function closeBuy(){document.getElementById('modal').classList.remove('show');}
 /* ── 填入你的 n8n Webhook URL ───────────────────────── */
@@ -737,7 +775,8 @@ async function submitOrder(){
   const now = new Date();
   const ymd = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
   const orderId = `${prefix}-${ymd}-${String(Math.floor(Math.random()*9000)+1000)}`;
-  const price = parseInt((document.getElementById('m-now').textContent||'0').replace(/[^\d]/g,''), 10);
+  const quantity = parseInt(document.getElementById('qty-val').textContent, 10) || 1;
+  const price = _unitPrice * quantity;
 
   /* ── Loading 狀態 ── */
   btn.disabled = true; btn.textContent = '處理中...';
@@ -752,7 +791,7 @@ async function submitOrder(){
         property: current, propertyName, name, phone, email,
         store: '7-ELEVEN',
         storeId, storeName, storeAddress: storeAddr,
-        orderId, price, ts: now.toISOString()
+        orderId, price, quantity, ts: now.toISOString()
       })
     });
     const data = await res.json();
