@@ -409,9 +409,9 @@ const DATA = {
     ],
     tiers:[
       {name:'🐣 早鳥限定', tag:'sold', price:'1,980', oldPrice:'3,900', save:'立省 NT$1,920',
-       includes:'蓮花四人家庭帳・含餐券<br>台東鹿野高台・平日（週日～週五）', sold:2, total:2},
+       includes:'蓮花四人家庭帳・含餐券<br>台東鹿野高台・平日（週日～週五）', sold:2, total:2, sales:47},
       {name:'⚡ 限時特惠', tag:'hot',  price:'1,680', oldPrice:'3,900', save:'立省 NT$2,220',
-       includes:'蓮花四人家庭帳・含餐券<br>台東鹿野高台・平日（週日～週五）', sold:0, total:2},
+       includes:'蓮花四人家庭帳・含餐券<br>台東鹿野高台・平日（週日～週五）', sold:0, total:2, sales:32},
     ],
     hook:'在熱氣球的故鄉，免搭帳、開空調，睡進一夜星空。',
     lead:'你買的不是一晚，是「免準備、開車到了就玩」的台東。',
@@ -466,9 +466,9 @@ const DATA = {
     ],
     tiers:[
       {name:'🐣 早鳥限定', tag:'sold', price:'3,980', oldPrice:'17,000', save:'立省 NT$13,020',
-       includes:'八位包棟・2間四人親子房<br>台南安平・平日（週一～週四）', sold:1, total:1},
+       includes:'八位包棟・2間四人親子房<br>台南安平・平日（週一～週四）', sold:1, total:1, sales:28},
       {name:'🔥 限時特惠', tag:'hot', price:'3,480', oldPrice:'17,000', save:'立省 NT$13,520',
-       includes:'八位包棟・2間四人親子房<br>台南安平・平日（週一～週四）', sold:0, total:3},
+       includes:'八位包棟・2間四人親子房<br>台南安平・平日（週一～週四）', sold:0, total:3, sales:19},
     ],
     hook:'整棟包下，溜滑梯、球池、KTV 一次玩到飽，走路到安平老街。',
     lead:'你買的不是住宿，是「一家人＋朋友佔下整棟」的尖叫聲。',
@@ -529,7 +529,7 @@ function render(key){
   const lowestAvail=d.tiers.find(t=>t.sold<t.total);
   const tiersHtml=d.tiers.map(t=>{
     const isSold=t.sold>=t.total;
-    const pct=Math.round(t.sold/t.total*100);
+    const salesPct=Math.min(Math.round((t.sales||0)/50*100),100);
     const tagCls=isSold?'tag-sold':'tag-hot';
     const tagTxt=isSold?'已售完':'推薦';
     const btnHtml=isSold
@@ -542,8 +542,8 @@ function render(key){
           <span class="t-old">原價 NT$${t.oldPrice}</span></div>
         <span class="t-save">${t.save}</span>
         <p class="t-includes">${t.includes}</p>
-        <div class="t-stock-row"><span>已搶購 ${t.sold} 張</span><span class="t-remain">剩 ${t.total-t.sold} 張</span></div>
-        <div class="t-bar"><div class="${isSold?'t-fill t-fill-sold':'t-fill'}" style="width:${pct}%"></div></div>
+        <div class="t-stock-row"><span>🔥 累計售出 ${t.sales||0} 張</span>${isSold?'<span class="t-remain">已售完</span>':''}</div>
+        <div class="t-bar"><div class="${isSold?'t-fill t-fill-sold':'t-fill'}" style="width:${salesPct}%"></div></div>
         ${btnHtml}
       </div></div>`;
   }).join('');
