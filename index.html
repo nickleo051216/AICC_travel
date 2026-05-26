@@ -256,6 +256,21 @@
   @keyframes btnBreath{0%,100%{box-shadow:0 8px 18px rgba(0,0,0,.2)}
     50%{box-shadow:0 12px 28px rgba(188,91,60,.45)}}
   .btn-buy{animation:btnBreath 2.5s ease-in-out infinite}
+  .btn-buy:disabled{opacity:.6;cursor:not-allowed;animation:none}
+
+  /* Loading 遮罩 */
+  .loading-overlay{display:none;position:absolute;inset:0;background:rgba(255,255,255,.82);
+    z-index:10;flex-direction:column;align-items:center;justify-content:center;border-radius:18px;backdrop-filter:blur(2px)}
+  .loading-overlay.show{display:flex}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{width:38px;height:38px;border:3.5px solid var(--sand);border-top-color:var(--accent);
+    border-radius:50%;animation:spin .7s linear infinite;margin-bottom:12px}
+  .loading-overlay p{font-size:14px;color:var(--ink-soft);font-weight:500}
+
+  /* 訂單錯誤提示 */
+  .order-error{display:none;background:#FFF0F0;border:1px solid #E8AAAA;border-radius:10px;
+    padding:12px;font-size:13px;color:#B91C1C;margin:10px 0;line-height:1.6;text-align:left}
+  .order-error.show{display:block}
 </style>
 </head>
 <body>
@@ -277,7 +292,11 @@
 <div class="modal" id="modal">
   <div class="sheet">
     <span class="x" onclick="closeBuy()">×</span>
-    <div id="step-pay">
+    <div id="step-pay" style="position:relative">
+      <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>正在建立訂單，請稍候⋯</p>
+      </div>
       <h3 class="serif">填寫訂購資料</h3>
       <p id="m-name" style="font-size:13px;color:var(--ink-soft);margin-top:4px"></p>
       <div class="sum">
@@ -309,7 +328,8 @@
         <input type="hidden" id="f-store-addr" value="">
       </div>
       <div class="cod-note">📦 訂購後我們會在 <b>24小時內</b> 透過 LINE 與您確認訂單，確認後寄出實體優惠卷，到店取貨付款即可。</div>
-      <button class="btn btn-buy" style="margin-top:4px" onclick="submitOrder()">確認訂購・超商貨到付款</button>
+      <div id="order-error" class="order-error"></div>
+      <button id="btn-submit" class="btn btn-buy" style="margin-top:4px" onclick="submitOrder()">確認訂購・超商貨到付款</button>
     </div>
     <div id="step-done" class="done">
       <div class="check">✓</div>
@@ -687,50 +707,77 @@ function closeBuy(){document.getElementById('modal').classList.remove('show');}
 const N8N_WEBHOOK = 'https://nickleo9.zeabur.app/webhook/weilu-order';
 /* ───────────────────────────────────────────────────── */
 
-function submitOrder(){
+async function submitOrder(){
   const name    = document.getElementById('f-name').value.trim();
   const phone   = document.getElementById('f-phone').value.trim();
   const email   = document.getElementById('f-email').value.trim();
   const storeId = document.getElementById('f-store-id').value;
   const storeName = document.getElementById('f-store-name').value;
   const storeAddr = document.getElementById('f-store-addr').value;
+  const btn     = document.getElementById('btn-submit');
+  const errBox  = document.getElementById('order-error');
+  const overlay = document.getElementById('loading-overlay');
 
+  errBox.classList.remove('show'); errBox.textContent = '';
+
+  /* ── 表單驗證 ── */
   if(!name){alert('請填寫姓名');return;}
+  const isChinese = /^[\u4e00-\u9fff]{2,5}$/.test(name);
+  const isEnglish = /^[A-Za-z\s]{4,10}$/.test(name);
+  if(!isChinese && !isEnglish){
+    alert('姓名格式：中文 2~5 個字，或英文 4~10 個字元');return;
+  }
   if(!phone||!/^09\d{8}$/.test(phone)){alert('請填寫正確的手機號碼（09開頭共10碼）');return;}
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Email 格式不正確');return;}
   if(!storeId){alert('請點「📍 選擇取貨門市」選擇 7-11 取貨門市');return;}
 
-  /* 前端直接產生訂單號（格式與 n8n 相同） */
+  /* ── 準備 payload ── */
   const propertyName = current === 'xuanmuju' ? '軒沐居｜蓮花四人帳' : '日光森林｜八位包棟';
   const prefix = current === 'xuanmuju' ? 'XMJ' : 'SLF';
   const now = new Date();
   const ymd = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
   const orderId = `${prefix}-${ymd}-${String(Math.floor(Math.random()*9000)+1000)}`;
-
-  /* 從 modal 取得使用者選的實際價格 */
   const price = parseInt((document.getElementById('m-now').textContent||'0').replace(/[^\d]/g,''), 10);
 
-  /* Fire-and-forget：no-cors + text/plain 避免 CORS preflight，
-     n8n 在背景處理，不阻塞使用者 */
-  fetch(N8N_WEBHOOK, {
-    method : 'POST',
-    mode   : 'no-cors',
-    headers: { 'Content-Type': 'text/plain' },
-    body   : JSON.stringify({
-      property: current, propertyName, name, phone, email,
-      store: '7-ELEVEN',
-      storeId, storeName, storeAddress: storeAddr,
-      orderId, price, ts: now.toISOString()
-    })
-  }).catch(()=>{});
+  /* ── Loading 狀態 ── */
+  btn.disabled = true; btn.textContent = '處理中...';
+  overlay.classList.add('show');
 
-  /* 用後即焚 — 清掉 sessionStorage 暫存 */
-  try { sessionStorage.removeItem('weilu_pickform'); } catch(_){}
+  try {
+    const res = await fetch(N8N_WEBHOOK, {
+      method : 'POST',
+      mode   : 'cors',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify({
+        property: current, propertyName, name, phone, email,
+        store: '7-ELEVEN',
+        storeId, storeName, storeAddress: storeAddr,
+        orderId, price, ts: now.toISOString()
+      })
+    });
+    const data = await res.json();
 
-  /* 立即顯示成功畫面 */
-  document.getElementById('vcode').textContent = orderId;
-  document.getElementById('step-pay').style.display = 'none';
-  document.getElementById('step-done').classList.add('show');
+    overlay.classList.remove('show');
+
+    if(data.ok){
+      /* 成功 */
+      try { sessionStorage.removeItem('weilu_pickform'); } catch(_){}
+      document.getElementById('vcode').textContent = data.orderId || orderId;
+      document.getElementById('step-pay').style.display = 'none';
+      document.getElementById('step-done').classList.add('show');
+    } else {
+      /* 後端回報失敗 */
+      btn.disabled = false; btn.textContent = '確認訂購・超商貨到付款';
+      errBox.textContent = '⚠️ 訂單建立失敗：' + (data.error || '未知錯誤，請稍後再試');
+      errBox.classList.add('show');
+    }
+  } catch(e){
+    /* 網路錯誤 */
+    overlay.classList.remove('show');
+    btn.disabled = false; btn.textContent = '確認訂購・超商貨到付款';
+    errBox.textContent = '⚠️ 網路連線異常，請檢查網路後再試一次';
+    errBox.classList.add('show');
+  }
 }
 
 /* ====== 7-11 選店：跳綠界 CVS Map ====== */
