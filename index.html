@@ -188,6 +188,10 @@
   .sum{background:var(--cream);border-radius:12px;padding:16px;margin:16px 0;font-size:14px}
   .sum div{display:flex;justify-content:space-between;padding:3px 0}
   .sum .tot{border-top:1px solid var(--line);margin-top:8px;padding-top:10px;font-size:17px;font-weight:700}
+  .booking-info{background:var(--cream);border-radius:12px;padding:14px 16px;margin:12px 0 4px;font-size:13px;line-height:1.7}
+  .booking-info .bi-name{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:6px}
+  .booking-info .bi-row{display:flex;gap:6px;color:var(--ink-soft)}
+  .booking-info .bi-row span:first-child{flex-shrink:0;width:16px;text-align:center}
   .order-form label{display:block;font-size:13px;font-weight:500;margin:12px 0 4px;color:var(--ink)}
   .order-form input,.order-form select{width:100%;padding:11px 13px;border-radius:9px;
     border:1.5px solid var(--line);font-family:inherit;font-size:15px;background:#fff;outline:none}
@@ -309,6 +313,11 @@
       </div>
       <h3 class="serif">填寫訂購資料</h3>
       <p id="m-name" style="font-size:13px;color:var(--ink-soft);margin-top:4px"></p>
+      <div class="booking-info" id="booking-info">
+        <div class="bi-name" id="bi-name"></div>
+        <div class="bi-row" id="bi-expire"></div>
+        <div class="bi-row" id="bi-days"></div>
+      </div>
       <div class="qty-row">
         <label>購買數量</label>
         <div class="qty-btns">
@@ -714,6 +723,12 @@ function openBuy(tierPrice,tierName,oldPrice){
   const old=oldPrice||d.priceOld;
   _unitPrice=parseInt(String(price).replace(/[^\d]/g,''),10);
   document.getElementById('m-name').textContent=name;
+  /* 民宿資訊 */
+  const bnbName=d.name.replace(/<br>/g,' ');
+  const findMeta=(key)=>{const m=d.meta.find(x=>x[0]===key);return m?m[1]:'';};
+  document.getElementById('bi-name').textContent='🏠 '+bnbName+'（'+d.eyebrow.split('·')[0].trim()+'）';
+  document.getElementById('bi-expire').innerHTML='<span>📅</span><span>使用期限：'+findMeta('使用期限')+'</span>';
+  document.getElementById('bi-days').innerHTML='<span>✅</span><span>適用日：'+findMeta('適用日')+'</span>';
   /* 重置數量為 1 */
   document.getElementById('qty-val').textContent='1';
   document.getElementById('qty-minus').disabled=true;
