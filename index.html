@@ -201,6 +201,11 @@
   .check{width:60px;height:60px;border-radius:50%;background:#06C755;color:#fff;font-size:34px;line-height:60px;margin:0 auto 12px}
   .voucher{border:2px dashed var(--accent);border-radius:14px;padding:18px;margin:14px 0;background:var(--cream)}
 
+  /* ====== 訂購流程步驟標題 ====== */
+  .step-title{font-size:13px;font-weight:700;color:var(--accent-dark);
+    margin:22px 0 10px;padding-left:10px;border-left:3px solid var(--accent);
+    letter-spacing:.5px}
+
   /* ====== 7-11 選店 picker ====== */
   .store-picker{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
   .btn-store-pick{padding:14px;border:2px dashed var(--accent);background:var(--cream);
@@ -330,8 +335,8 @@
         <div class="bi-row" id="bi-expire"></div>
         <div class="bi-row" id="bi-days"></div>
       </div>
+      <div class="step-title">1 · 購買數量</div>
       <div class="qty-row">
-        <label>購買數量</label>
         <div class="qty-btns">
           <button type="button" id="qty-minus" onclick="changeQty(-1)">−</button>
           <span id="qty-val">1</span>
@@ -344,12 +349,8 @@
         <div><span>原價</span><span id="m-old" style="text-decoration:line-through;color:var(--ink-soft)"></span></div>
         <div class="tot"><span id="pay-method-label">🏪 超商貨到付款</span><span id="m-pay" style="color:var(--accent-dark)"></span></div>
       </div>
-      <!-- 付款方式切換 -->
-      <div class="pay-toggle">
-        <input type="radio" name="payMethod" id="pm-cod" value="cod" checked onchange="switchPayment('cod')"><label for="pm-cod">🏪 貨到付款</label>
-        <input type="radio" name="payMethod" id="pm-online" value="online" onchange="switchPayment('online')"><label for="pm-online">💳 線上付款</label>
-      </div>
-      <div id="online-note" class="online-note">💳 線上付款後，我們會在 24 小時內透過超商寄出實體優惠卷（免付運費），您到店取件即可。支援信用卡、ATM、超商代碼等多元付款。</div>
+      <!-- 步驟 2：收件人 -->
+      <div class="step-title">2 · 收件人資訊</div>
       <div class="order-form">
         <label>姓名</label>
         <input type="text" id="f-name" placeholder="請輸入真實姓名">
@@ -357,22 +358,30 @@
         <input type="tel" id="f-phone" placeholder="09xxxxxxxx">
         <label>Email（寄送訂單確認信）</label>
         <input type="email" id="f-email" placeholder="your@email.com">
-        <label>取件門市（7-11 取貨）</label>
-        <div class="store-picker">
-          <button type="button" class="btn-store-pick" onclick="pickStore()">
-            <span id="store-pick-label">📍 選擇取貨門市</span>
-          </button>
-          <div id="store-info" class="store-info" style="display:none">
-            <div><b id="store-name"></b></div>
-            <div id="store-address" style="font-size:12px;color:var(--ink-soft);margin-top:2px"></div>
-            <div style="font-size:11px;color:var(--ink-soft);margin-top:4px">店號：<span id="store-id"></span></div>
-          </div>
-        </div>
-        <input type="hidden" id="f-store" value="7-ELEVEN">
-        <input type="hidden" id="f-store-id" value="">
-        <input type="hidden" id="f-store-name" value="">
-        <input type="hidden" id="f-store-addr" value="">
       </div>
+      <!-- 步驟 3：取件門市 -->
+      <div class="step-title">3 · 取件門市（7-11）</div>
+      <div class="store-picker">
+        <button type="button" class="btn-store-pick" onclick="pickStore()">
+          <span id="store-pick-label">📍 選擇取貨門市</span>
+        </button>
+        <div id="store-info" class="store-info" style="display:none">
+          <div><b id="store-name"></b></div>
+          <div id="store-address" style="font-size:12px;color:var(--ink-soft);margin-top:2px"></div>
+          <div style="font-size:11px;color:var(--ink-soft);margin-top:4px">店號：<span id="store-id"></span></div>
+        </div>
+      </div>
+      <input type="hidden" id="f-store" value="7-ELEVEN">
+      <input type="hidden" id="f-store-id" value="">
+      <input type="hidden" id="f-store-name" value="">
+      <input type="hidden" id="f-store-addr" value="">
+      <!-- 步驟 4：付款方式 -->
+      <div class="step-title">4 · 付款方式</div>
+      <div class="pay-toggle">
+        <input type="radio" name="payMethod" id="pm-cod" value="cod" checked onchange="switchPayment('cod')"><label for="pm-cod">🏪 貨到付款</label>
+        <input type="radio" name="payMethod" id="pm-online" value="online" onchange="switchPayment('online')"><label for="pm-online">💳 線上付款</label>
+      </div>
+      <div id="online-note" class="online-note">💳 線上付款後，我們會在 24 小時內透過超商寄出實體優惠卷（免付運費），您到店取件即可。支援信用卡、ATM、超商代碼等多元付款。</div>
       <div id="cod-note" class="cod-note">📦 訂購後我們會在 <b>24小時內</b> 透過 LINE 與您確認訂單，確認後寄出實體優惠卷，到店取貨付款即可。</div>
       <div id="order-error" class="order-error"></div>
       <button id="btn-submit" class="btn btn-buy" style="margin-top:4px" onclick="submitOrder()">確認訂購・超商貨到付款</button>
