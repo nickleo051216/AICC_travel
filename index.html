@@ -357,23 +357,21 @@
         <input type="tel" id="f-phone" placeholder="09xxxxxxxx">
         <label>Email（寄送訂單確認信）</label>
         <input type="email" id="f-email" placeholder="your@email.com">
-        <div id="cod-fields">
-          <label>取件超商（7-11 貨到付款）</label>
-          <div class="store-picker">
-            <button type="button" class="btn-store-pick" onclick="pickStore()">
-              <span id="store-pick-label">📍 選擇取貨門市</span>
-            </button>
-            <div id="store-info" class="store-info" style="display:none">
-              <div><b id="store-name"></b></div>
-              <div id="store-address" style="font-size:12px;color:var(--ink-soft);margin-top:2px"></div>
-              <div style="font-size:11px;color:var(--ink-soft);margin-top:4px">店號：<span id="store-id"></span></div>
-            </div>
+        <label>取件門市（7-11 取貨）</label>
+        <div class="store-picker">
+          <button type="button" class="btn-store-pick" onclick="pickStore()">
+            <span id="store-pick-label">📍 選擇取貨門市</span>
+          </button>
+          <div id="store-info" class="store-info" style="display:none">
+            <div><b id="store-name"></b></div>
+            <div id="store-address" style="font-size:12px;color:var(--ink-soft);margin-top:2px"></div>
+            <div style="font-size:11px;color:var(--ink-soft);margin-top:4px">店號：<span id="store-id"></span></div>
           </div>
-          <input type="hidden" id="f-store" value="7-ELEVEN">
-          <input type="hidden" id="f-store-id" value="">
-          <input type="hidden" id="f-store-name" value="">
-          <input type="hidden" id="f-store-addr" value="">
         </div>
+        <input type="hidden" id="f-store" value="7-ELEVEN">
+        <input type="hidden" id="f-store-id" value="">
+        <input type="hidden" id="f-store-name" value="">
+        <input type="hidden" id="f-store-addr" value="">
       </div>
       <div id="cod-note" class="cod-note">📦 訂購後我們會在 <b>24小時內</b> 透過 LINE 與您確認訂單，確認後寄出實體優惠卷，到店取貨付款即可。</div>
       <div id="order-error" class="order-error"></div>
@@ -790,19 +788,16 @@ const N8N_PAY_WEBHOOK = 'https://nickleo9.zeabur.app/webhook/weilu-pay';
 let _payMethod = 'cod';
 function switchPayment(method){
   _payMethod = method;
-  const codFields = document.getElementById('cod-fields');
   const codNote = document.getElementById('cod-note');
   const onlineNote = document.getElementById('online-note');
   const btn = document.getElementById('btn-submit');
   const label = document.getElementById('pay-method-label');
   if(method === 'online'){
-    codFields.style.display = 'none';
     codNote.style.display = 'none';
     onlineNote.classList.add('show');
     btn.textContent = '確認訂購・前往付款';
     label.textContent = '💳 線上付款';
   } else {
-    codFields.style.display = '';
     codNote.style.display = '';
     onlineNote.classList.remove('show');
     btn.textContent = '確認訂購・超商貨到付款';
@@ -832,8 +827,8 @@ async function submitOrder(){
   }
   if(!phone||!/^09\d{8}$/.test(phone)){alert('請填寫正確的手機號碼（09開頭共10碼）');return;}
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Email 格式不正確');return;}
-  /* 貨到付款才需要選店 */
-  if(_payMethod === 'cod' && !storeId){alert('請點「📍 選擇取貨門市」選擇 7-11 取貨門市');return;}
+  /* 所有付款方式都要先選 7-11 門市（純配送/COD 共用） */
+  if(!storeId){alert('請點「📍 選擇取貨門市」選擇 7-11 取貨門市');return;}
 
   /* ── 準備 payload ── */
   const propertyName = current === 'xuanmuju' ? '軒沐居｜蓮花四人帳' : '日光森林｜八位包棟';
@@ -859,6 +854,7 @@ async function submitOrder(){
         headers: { 'Content-Type': 'application/json' },
         body   : JSON.stringify({
           property: current, propertyName, name, phone, email,
+          storeId, storeName, storeAddress: storeAddr,
           orderId, price, quantity, ts: now.toISOString()
         })
       });
