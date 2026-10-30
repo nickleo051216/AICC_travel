@@ -789,8 +789,8 @@ function changeQty(delta){
 }
 function closeBuy(){document.getElementById('modal').classList.remove('show');}
 /* ── 填入你的 n8n Webhook URL ───────────────────────── */
-const N8N_WEBHOOK = 'https://nickleo9.zeabur.app/webhook/weilu-order';
-const N8N_PAY_WEBHOOK = 'https://nickleo9.zeabur.app/webhook/weilu-pay';
+const N8N_WEBHOOK = 'https://n8n.znstudio216.com/webhook/weilu-order';
+const N8N_PAY_WEBHOOK = 'https://n8n.znstudio216.com/webhook/weilu-pay';
 /* ───────────────────────────────────────────────────── */
 
 /* ====== 付款方式切換 ====== */
@@ -930,7 +930,7 @@ async function submitOrder(){
 
 /* ====== 7-11 選店：跳綠界 CVS Map ====== */
 const ECPAY_MERCHANTID = '3475994';
-const CVS_CALLBACK_URL = 'https://nickleo9.zeabur.app/webhook/weilu-cvs-callback';
+const CVS_CALLBACK_URL = 'https://n8n.znstudio216.com/webhook/weilu-cvs-callback';
 const CVS_MAP_URL = 'https://logistics.ecpay.com.tw/Express/map';
 
 function pickStore(){
